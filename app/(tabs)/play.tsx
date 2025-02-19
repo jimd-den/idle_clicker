@@ -17,8 +17,8 @@ import { useWorkSession } from '@/contexts/WorkSessionContext';
  */
 export default function PlayScreen() {
   // --- UI State ---
-  const [elapsedTime, setElapsedTime] = useState(0);
-  const [displayTime, setDisplayTime] = useState("00:00");
+  const [elapsedTime, setElapsedTime] = useState(0); // Milliseconds elapsed - updates frequently
+  // const [displayTime, setDisplayTime] = useState("00:00"); // REMOVE displayTime state from PlayScreen
   const [clicks, setClicks] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [upm, setUpm] = useState(0);
@@ -45,7 +45,7 @@ export default function PlayScreen() {
     setIsRunning(initialIsRunning);
     setClicks(initialClicks);
     setElapsedTime(initialElapsedTime);
-    setDisplayTime(formatTime(initialElapsedTime));
+    // setDisplayTime(formatTime(initialElapsedTime)); // REMOVE displayTime initialization from PlayScreen
 
     console.log("PlayScreen: useEffect (initial state) - isRunning:", initialIsRunning, "clicks:", initialClicks, "elapsedTime:", initialElapsedTime, "upm:", upm);
   }, [controller]);
@@ -78,18 +78,19 @@ export default function PlayScreen() {
     };
   }, [controller]);
 
-  useEffect(() => {
-    // Update displayTime every second
-    const intervalId = setInterval(() => {
-      setDisplayTime(formatTime(elapsedTime));
-      console.log("PlayScreen: displayTime interval - updating displayTime - Elapsed Time:", elapsedTime); // ADDED LOG - ELAPSED TIME
-    }, 1000); // Update every 1 second - ENSURING 1000ms INTERVAL
+  // REMOVE useEffect for displayTime from PlayScreen
+  // useEffect(() => {
+  //   // Update displayTime every second
+  //   const intervalId = setInterval(() => {
+  //     setDisplayTime(formatTime(elapsedTime));
+  //     console.log("PlayScreen: displayTime interval - updating displayTime - Elapsed Time:", elapsedTime); // ADDED LOG - ELAPSED TIME
+  //   }, 1000); // Update every 1 second - ENSURING 1000ms INTERVAL
 
-    return () => {
-      clearInterval(intervalId);
-      console.log("PlayScreen: displayTime interval - cleared"); // ADDED LOG
-    };
-  }, [elapsedTime]);
+  //   return () => {
+  //     clearInterval(intervalId);
+  //     console.log("PlayScreen: displayTime interval - cleared"); // ADDED LOG
+  //   };
+  // }, [elapsedTime]);
 
 
   // --- Event Handlers ---
@@ -119,7 +120,7 @@ export default function PlayScreen() {
     const updatedIsRunning = controller.resetSession();
     setIsRunning(updatedIsRunning);
     setElapsedTime(0);
-    setDisplayTime("00:00");
+    // setDisplayTime("00:00"); // REMOVE displayTime reset from PlayScreen
     setClicks(0);
     setUpm(0);
     setNotes([]); // Clear notes on reset
@@ -141,7 +142,7 @@ export default function PlayScreen() {
   return (
     <View style={styles.container}>
       {/* Top Module: Performance Metrics Display */}
-      <MetricsDisplay clicks={clicks} elapsedTime={displayTime} upm={upm} />
+      <MetricsDisplay clicks={clicks} elapsedTimeMs={elapsedTime} upm={upm} /> {/* Pass elapsedTimeMs */}
 
       {/* Middle Module: Work Unit Input */}
       <TouchableOpacity

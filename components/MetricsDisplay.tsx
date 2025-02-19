@@ -1,16 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react'; // Import useState and useEffect
 import { View, StyleSheet } from 'react-native';
 import { ThemedText } from './ThemedText';
-// import { formatTime } from '@/utils/timeUtils'; // No longer needed here
+import { formatTime } from '@/utils/timeUtils'; // Import formatTime
 
 interface MetricsDisplayProps {
   clicks: number;
-  elapsedTime: string; // Expects formatted time string now
+  elapsedTimeMs: number; // Expect milliseconds as prop now
   upm: number;
 }
 
-export function MetricsDisplay({ clicks, elapsedTime, upm }: MetricsDisplayProps) {
-  console.log("MetricsDisplay: Rendering with props - Clicks:", clicks, "ElapsedTime:", elapsedTime, "UPM:", upm); // ADDED LOG
+export function MetricsDisplay({ clicks, elapsedTimeMs, upm }: MetricsDisplayProps) { // Receive elapsedTimeMs
+  const [displayTime, setDisplayTime] = useState("00:00"); // Local state for displayTime
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setDisplayTime(formatTime(elapsedTimeMs)); // Format current elapsedTimeMs for display
+      console.log("MetricsDisplay: displayTime interval - updating displayTime - Elapsed Time Ms:", elapsedTimeMs); // ADDED LOG - ELAPSED TIME MS
+    }, 1000); // Update every 1 second
+
+    return () => {
+      clearInterval(intervalId);
+      console.log("MetricsDisplay: displayTime interval - cleared"); // ADDED LOG
+    };
+  }, [elapsedTimeMs]); // Update interval when elapsedTimeMs prop changes
+
+
+  console.log("MetricsDisplay: Rendering with props - Clicks:", clicks, "ElapsedTimeMs:", elapsedTimeMs, "UPM:", upm); // ADDED LOG
   return (
     <View style={styles.topModuleContainer}>
       <View style={styles.metricContainer}>
@@ -22,7 +37,7 @@ export function MetricsDisplay({ clicks, elapsedTime, upm }: MetricsDisplayProps
 
       <View style={styles.metricContainer}>
         <ThemedText style={styles.metricValue} type="title">
-          {elapsedTime} {/* Now receives formatted time string */}
+          {displayTime} {/* Use local displayTime state */}
         </ThemedText>
         <ThemedText style={styles.metricLabel}>Stopwatch</ThemedText>
       </View>
