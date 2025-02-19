@@ -82,7 +82,7 @@ export default function PlayScreen() {
     // Update displayTime every second
     const intervalId = setInterval(() => {
       setDisplayTime(formatTime(elapsedTime));
-      console.log("PlayScreen: displayTime interval - updating displayTime"); // ADDED LOG
+      console.log("PlayScreen: displayTime interval - updating displayTime - Elapsed Time:", elapsedTime); // ADDED LOG - ELAPSED TIME
     }, 1000); // Update every 1 second - ENSURING 1000ms INTERVAL
 
     return () => {
@@ -94,11 +94,12 @@ export default function PlayScreen() {
 
   // --- Event Handlers ---
   const handleIncrementClick = () => {
-    console.log("PlayScreen: handleIncrementClick() called");
+    console.log("PlayScreen: handleIncrementClick() called - START"); // ADDED LOG - START
     controller.incrementClicks((updatedClicks) => {
       setClicks(updatedClicks);
       console.log("PlayScreen: handleIncrementClick() - clicks updated to:", updatedClicks);
     });
+    console.log("PlayScreen: handleIncrementClick() called - END"); // ADDED LOG - END
   };
 
   const handleStartPause = () => {
