@@ -75,10 +75,10 @@ export default function PlayScreen() {
   // --- Event Handlers ---
   const handleIncrementClick = () => {
     console.log("PlayScreen: handleIncrementClick() called");
-    controller.incrementClicks();
-    const updatedClicks = controller.getClicks();
-    setClicks(updatedClicks); // Update local clicks state to reflect changes
-    console.log("PlayScreen: handleIncrementClick() - clicks updated to:", updatedClicks);
+    controller.incrementClicks((updatedClicks) => { // Pass callback to controller
+      setClicks(updatedClicks); // Update clicks state using callback
+      console.log("PlayScreen: handleIncrementClick() - clicks updated to:", updatedClicks);
+    });
   };
 
   const handleStartPause = () => {
