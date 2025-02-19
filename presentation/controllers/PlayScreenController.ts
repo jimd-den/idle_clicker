@@ -144,8 +144,3 @@ export class PlayScreenController {
     this.upmUpdateCallback = null;
   }
 }
-```
-
-**File: app/(tabs)/play.tsx**
-```typescript
-app/(tabs)/play.tsx
