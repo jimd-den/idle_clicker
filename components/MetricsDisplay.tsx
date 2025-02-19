@@ -10,6 +10,7 @@ interface MetricsDisplayProps {
 }
 
 export function MetricsDisplay({ clicks, elapsedTime, upm }: MetricsDisplayProps) {
+  console.log("MetricsDisplay: Rendering with props - Clicks:", clicks, "ElapsedTime:", elapsedTime, "UPM:", upm); // ADDED LOG
   return (
     <View style={styles.topModuleContainer}>
       <View style={styles.metricContainer}>
