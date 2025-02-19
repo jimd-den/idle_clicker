@@ -82,9 +82,13 @@ export default function PlayScreen() {
     // Update displayTime every second
     const intervalId = setInterval(() => {
       setDisplayTime(formatTime(elapsedTime));
-    }, 1000);
+      console.log("PlayScreen: displayTime interval - updating displayTime"); // ADDED LOG
+    }, 1000); // Update every 1 second - ENSURING 1000ms INTERVAL
 
-    return () => clearInterval(intervalId);
+    return () => {
+      clearInterval(intervalId);
+      console.log("PlayScreen: displayTime interval - cleared"); // ADDED LOG
+    };
   }, [elapsedTime]);
 
 
