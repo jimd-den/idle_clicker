@@ -22,12 +22,14 @@ import { WorkSession } from '@/domain/entities/WorkSession';
 
 export class PlayScreenController {
   private workTimerService: WorkTimerService;
+  private workSessionInstance: WorkSession; // Keep track of WorkSession instance
 
   constructor() {
     // Infrastructure Layer dependency
     const timerService = new TimerServiceImpl();
     // Domain Layer dependency (WorkSession entity)
     const workSession = new WorkSession();
+    this.workSessionInstance = workSession; // Store the WorkSession instance
 
     // Use Cases - Domain Layer logic, now instantiated here and passed to service
     const startTimerUseCase = new StartTimerUseCase(workSession);
@@ -45,41 +47,45 @@ export class PlayScreenController {
       timerService
     );
       console.log("PlayScreenController: constructor - WorkTimerService created"); // ADDED LOG
+      console.log("PlayScreenController: constructor - WorkSession instance:", this.workSessionInstance); // ADDED LOG
   }
 
   startTimer(): void {
-    console.log("PlayScreenController: startTimer() called"); // ADDED LOG
+    console.log("PlayScreenController: startTimer() - WorkSession instance:", this.workSessionInstance); // ADDED LOG
     this.workTimerService.startTimer();
   }
 
   pauseTimer(): void {
-    console.log("PlayScreenController: pauseTimer() called"); // ADDED LOG
+    console.log("PlayScreenController: pauseTimer() - WorkSession instance:", this.workSessionInstance); // ADDED LOG
     this.workTimerService.pauseTimer();
   }
 
   incrementClicks(): void {
-    console.log("PlayScreenController: incrementClicks() called"); // ADDED LOG
+    console.log("PlayScreenController: incrementClicks() - WorkSession instance:", this.workSessionInstance); // ADDED LOG
     this.workTimerService.incrementClicks();
   }
 
   resetSession(): void {
-    console.log("PlayScreenController: resetSession() called"); // ADDED LOG
+    console.log("PlayScreenController: resetSession() - WorkSession instance:", this.workSessionInstance); // ADDED LOG
     this.workTimerService.resetSession();
   }
 
   isRunning(): boolean {
+    console.log("PlayScreenController: isRunning() - WorkSession instance:", this.workSessionInstance); // ADDED LOG
     const running = this.workTimerService.isRunning();
     console.log("PlayScreenController: isRunning() returning:", running); // ADDED LOG
     return running;
   }
 
   getElapsedTimeMs(): number {
+    console.log("PlayScreenController: getElapsedTimeMs() - WorkSession instance:", this.workSessionInstance); // ADDED LOG
     const elapsed = this.workTimerService.getElapsedTimeMs();
     console.log("PlayScreenController: getElapsedTimeMs() returning:", elapsed); // ADDED LOG
     return elapsed;
   }
 
   getClicks(): number {
+    console.log("PlayScreenController: getClicks() - WorkSession instance:", this.workSessionInstance); // ADDED LOG
     const clicks = this.workTimerService.getClicks();
     console.log("PlayScreenController: getClicks() returning:", clicks); // ADDED LOG
     return clicks;

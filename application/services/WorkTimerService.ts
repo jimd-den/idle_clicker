@@ -52,6 +52,8 @@ export class WorkTimerService {
     this.resetSessionUseCase = resetSessionUseCase;
     this.timerService = timerService;
 
+    console.log("WorkTimerService: constructor - WorkSession instance created:", this.workSession); // ADDED LOG
+
     this.timerService.onTimeUpdate((elapsedTimeMs) => {
       // Update elapsed time in WorkSession (if needed in future, for now, UI can track)
       // this.workSession.setElapsedTimeMs(elapsedTimeMs);
@@ -73,34 +75,41 @@ export class WorkTimerService {
   }
 
   startTimer(): void {
+    console.log("WorkTimerService: startTimer() - WorkSession instance:", this.workSession); // ADDED LOG
     this.startTimerUseCase.execute();
     this.timerService.start();
   }
 
   pauseTimer(): void {
+    console.log("WorkTimerService: pauseTimer() - WorkSession instance:", this.workSession); // ADDED LOG
     this.pauseTimerUseCase.execute();
     this.timerService.pause();
   }
 
   incrementClicks(): void {
+    console.log("WorkTimerService: incrementClicks() - WorkSession instance:", this.workSession); // ADDED LOG
     this.incrementClicksUseCase.execute();
   }
 
   resetSession(): void {
+    console.log("WorkTimerService: resetSession() - WorkSession instance:", this.workSession); // ADDED LOG
     this.resetSessionUseCase.execute();
     this.timerService.pause(); // Pause the timer on reset as well
     this.timerService.clearTimeUpdateCallback(); // Clear any existing time update callbacks
   }
 
   isRunning(): boolean {
+    console.log("WorkTimerService: isRunning() - WorkSession instance:", this.workSession); // ADDED LOG
     return this.workSession.isRunning();
   }
 
   getElapsedTimeMs(): number {
+    console.log("WorkTimerService: getElapsedTimeMs() - WorkSession instance:", this.workSession); // ADDED LOG
     return this.timerService.getElapsedTimeMs();
   }
 
   getClicks(): number {
+    console.log("WorkTimerService: getClicks() - WorkSession instance:", this.workSession); // ADDED LOG
     return this.workSession.getClicks();
   }
 }
