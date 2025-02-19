@@ -50,9 +50,14 @@ export default function HomeScreen() {
           <ThemedText type="defaultSemiBold">app-example</ThemedText>.
         </ThemedText>
       </ThemedView>
-    </ParallaxScrollView>
-  );
-}
+
+      <TouchableOpacity style={styles.playButton}>
+        <Link href="/(tabs)/play" style={styles.playButtonText}>
+          Play
+        </Link>
+      </TouchableOpacity>
+
+      <ThemedView style={styles.stepContainer}>
 
 const styles = StyleSheet.create({
   titleContainer: {
@@ -70,5 +75,17 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     position: 'absolute',
+  },
+  playButton: {
+    backgroundColor: '#0a7ea4',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  playButtonText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
   },
 });

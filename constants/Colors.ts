@@ -24,6 +24,7 @@ export const Colors = {
     tabIconSelected: tintColorDark,
   },
 };
+
 const workTimerButton = '#0a7ea4';
 
 export const Colors = {
