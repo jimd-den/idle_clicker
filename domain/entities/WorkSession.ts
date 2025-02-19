@@ -1,14 +1,3 @@
-/**
- * Domain Layer - Entities
- *
- * WorkSession entity: Represents a user's work session.
- * It encapsulates the data related to a single work session,
- * such as start time, end time, elapsed time, and click count.
- *
- * This entity is pure domain logic and has no dependencies on
- * frameworks or UI.
- */
-
 export class WorkSession {
   private startTime: Date | null;
   private endTime: Date | null;
@@ -20,6 +9,7 @@ export class WorkSession {
     this.endTime = null;
     this.elapsedTimeMs = 0;
     this.clicks = 0;
+    console.log("WorkSession: constructor - WorkSession instance created"); // ADDED LOG
   }
 
   start(): void {
@@ -27,7 +17,13 @@ export class WorkSession {
     if (!this.startTime) {
       this.startTime = new Date();
       console.log("WorkSession: start() - timer started - startTime:", this.startTime); // ADDED LOG
-    } else {
+    } else if (this.endTime) {
+      // Timer was paused and is being restarted
+      this.startTime = new Date();
+      this.endTime = null; // Clear endTime when restarting
+      console.log("WorkSession: start() - timer restarted after pause - startTime:", this.startTime, "endTime cleared:", this.endTime); // ADDED LOG
+    }
+     else {
       console.log("WorkSession: start() - timer already started, ignoring call"); // ADDED LOG
     }
     console.log("WorkSession: start() - after start - startTime:", this.startTime, "endTime:", this.endTime); // ADDED LOG
@@ -44,19 +40,23 @@ export class WorkSession {
     console.log("WorkSession: pause() - after pause - startTime:", this.startTime, "endTime:", this.endTime); // ADDED LOG
   }
 
-  recordClick(): void {
-    console.log("WorkSession: recordClick() called"); // ADDED LOG
-    this.clicks++;
-    console.log("WorkSession: clicks incremented to:", this.clicks); // ADDED LOG
-  }
-
   reset(): void {
-    console.log("WorkSession: reset() called - before reset - startTime:", this.startTime, "endTime:", this.endTime, "clicks:", this.clicks, "elapsedTimeMs:", this.elapsedTimeMs); // ADDED LOG
+    console.log("WorkSession: reset() called - before reset - startTime:", this.startTime, "endTime:", this.endTime, "elapsedTimeMs:", this.elapsedTimeMs, "clicks:", this.clicks); // ADDED LOG
     this.startTime = null;
     this.endTime = null;
     this.elapsedTimeMs = 0;
     this.clicks = 0;
-    console.log("WorkSession: reset() - session reset - clicks:", this.clicks, "elapsedTimeMs:", this.elapsedTimeMs, "startTime:", this.startTime, "endTime:", this.endTime); // ADDED LOG
+    console.log("WorkSession: reset() - session reset - startTime:", this.startTime, "endTime:", this.endTime, "elapsedTimeMs:", this.elapsedTimeMs, "clicks:", this.clicks); // ADDED LOG
+  }
+
+  recordClick(): void {
+    this.clicks++;
+    console.log("WorkSession: recordClick() called"); // ADDED LOG
+    console.log("WorkSession: clicks incremented to:", this.clicks); // ADDED LOG
+  }
+
+  getElapsedTimeMs(): number {
+    return this.elapsedTimeMs;
   }
 
   getStartTime(): Date | null {
@@ -65,10 +65,6 @@ export class WorkSession {
 
   getEndTime(): Date | null {
     return this.endTime;
-  }
-
-  getElapsedTimeMs(): number {
-    return this.elapsedTimeMs;
   }
 
   getClicks(): number {
@@ -80,5 +76,10 @@ export class WorkSession {
     const running = !!this.startTime && !this.endTime;
     console.log("WorkSession: isRunning() - startTime:", this.startTime, "endTime:", this.endTime, "returning:", running); // ADDED LOG
     return running;
+  }
+
+  updateElapsedTime(elapsedTimeMs: number): void {
+    this.elapsedTimeMs = elapsedTimeMs;
+    console.log("WorkSession: updateElapsedTime() - elapsedTimeMs updated to:", this.elapsedTimeMs); // ADDED LOG
   }
 }
