@@ -23,6 +23,8 @@ import { WorkSession } from '@/domain/entities/WorkSession';
 export class PlayScreenController {
   private workTimerService: WorkTimerService;
   private workSessionInstance: WorkSession; // Keep track of WorkSession instance
+  private upmUpdateCallback: ((upm: number) => void) | null = null; // Callback for UPM updates
+
 
   /**
    * Constructor for PlayScreenController.
@@ -54,6 +56,11 @@ export class PlayScreenController {
     );
     console.log("PlayScreenController: constructor - WorkTimerService created");
     console.log("PlayScreenController: constructor - WorkSession instance:", this.workSessionInstance);
+
+    // Set up elapsed time update callback to also update UPM
+    this.workTimerService.onElapsedTimeUpdate((elapsedTimeMs) => {
+      this.updateUPM(); // Recalculate UPM whenever elapsed time updates
+    });
   }
 
   startTimer(): boolean { // Modified to return boolean
@@ -73,11 +80,13 @@ export class PlayScreenController {
     this.workTimerService.incrementClicks();
     const updatedClicks = this.workTimerService.getClicks();
     updateClicksUI(updatedClicks); // Invoke callback to update UI
+    this.updateUPM(); // Recalculate UPM whenever clicks increment
   }
 
   resetSession(): boolean { // Modified to return boolean - although reset always stops timer
     console.log("PlayScreenController: resetSession() - WorkSession instance:", this.workSessionInstance);
     this.workTimerService.resetSession();
+    this.updateUPM(); // Reset UPM to 0 on session reset
     return this.workTimerService.isRunning(); // Return isRunning status (should be false after reset)
   }
 
@@ -109,6 +118,34 @@ export class PlayScreenController {
 
   clearElapsedTimeUpdateCallback() {
     console.log("PlayScreenController: clearElapsedTimeUpdateCallback() called");
-    this.workTimerService.clearElapsedTimeUpdateCallback();
+    this.workTimerService.clearTimeUpdateCallback();
+  }
+
+  private updateUPM(): void {
+    const elapsedTimeMs = this.workTimerService.getElapsedTimeMs();
+    const clicks = this.workTimerService.getClicks();
+    let currentUPM = 0;
+    if (elapsedTimeMs > 0) {
+      currentUPM = clicks / (elapsedTimeMs / 60000);
+    }
+    console.log("PlayScreenController: updateUPM() - elapsedTimeMs:", elapsedTimeMs, "clicks:", clicks, "upm:", currentUPM);
+    if (this.upmUpdateCallback) {
+      this.upmUpdateCallback(currentUPM); // Notify UI about UPM update
+    }
+  }
+
+  onUPMUpdate(callback: (upm: number) => void) {
+    console.log("PlayScreenController: onUPMUpdate() setting callback");
+    this.upmUpdateCallback = callback;
+  }
+
+  clearUPMUpdateCallback() {
+    console.log("PlayScreenController: clearUPMUpdateCallback() called");
+    this.upmUpdateCallback = null;
   }
 }
+```
+
+**File: app/(tabs)/play.tsx**
+```typescript
+app/(tabs)/play.tsx
