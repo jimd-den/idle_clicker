@@ -53,7 +53,7 @@ export class WorkTimerService {
     this.resetSessionUseCase = resetSessionUseCase;
     this.timerService = timerService;
 
-    console.log("WorkTimerService: constructor - WorkSession instance injected:", this.workSession); // ADDED LOG
+    console.log("WorkTimerService: constructor - WorkTimerService instance injected:", this.workSession); // ADDED LOG
 
     this.timerService.onTimeUpdate((elapsedTimeMs) => {
       // Update elapsed time in WorkSession (if needed in future, for now, UI can track)
@@ -75,16 +75,18 @@ export class WorkTimerService {
     this.timeUpdateCallback = null;
   }
 
-  startTimer(): void {
+  startTimer(): boolean {
     console.log("WorkTimerService: startTimer() - WorkSession instance:", this.workSession); // ADDED LOG
     this.startTimerUseCase.execute();
     this.timerService.start();
+    return this.isRunning();
   }
 
-  pauseTimer(): void {
+  pauseTimer(): boolean {
     console.log("WorkTimerService: pauseTimer() - WorkSession instance:", this.workSession); // ADDED LOG
     this.pauseTimerUseCase.execute();
     this.timerService.pause();
+    return this.isRunning();
   }
 
   incrementClicks(): void {
@@ -92,11 +94,13 @@ export class WorkTimerService {
     this.incrementClicksUseCase.execute();
   }
 
-  resetSession(): void {
+  resetSession(): boolean {
     console.log("WorkTimerService: resetSession() - WorkSession instance:", this.workSession); // ADDED LOG
     this.resetSessionUseCase.execute();
     this.timerService.pause(); // Pause the timer on reset as well
     this.timerService.clearTimeUpdateCallback(); // Clear any existing time update callbacks
+    this.timerService.clearTimeUpdateCallback(); // Call it twice to be sure it's cleared - due to potential multiple subscriptions
+    return this.isRunning(); // timer is not running after reset
   }
 
   isRunning(): boolean {
@@ -112,5 +116,15 @@ export class WorkTimerService {
   getClicks(): number {
     console.log("WorkTimerService: getClicks() - WorkSession instance:", this.workSession); // ADDED LOG
     return this.workSession.getClicks();
+  }
+
+  onElapsedTimeUpdate(callback: (elapsedTimeMs: number) => void) {
+    console.log("WorkTimerService: onElapsedTimeUpdate() setting callback");
+    this.timerService.onTimeUpdate(callback);
+  }
+
+  clearElapsedTimeUpdateCallback() {
+    console.log("WorkTimerService: clearElapsedTimeUpdateCallback() called");
+    this.timerService.clearTimeUpdateCallback();
   }
 }

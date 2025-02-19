@@ -65,50 +65,40 @@ export class PlayScreenController {
 
   startTimer(): boolean { // Modified to return boolean
     console.log("PlayScreenController: startTimer() - WorkSession instance:", this.workSessionInstance);
-    this.workTimerService.startTimer();
-    return this.workTimerService.isRunning(); // Return isRunning status
+    return this.workTimerService.startTimer(); // Now just call service method
   }
 
   pauseTimer(): boolean { // Modified to return boolean
     console.log("PlayScreenController: pauseTimer() - WorkSession instance:", this.workSessionInstance);
-    this.workTimerService.pauseTimer();
-    return this.workTimerService.isRunning(); // Return isRunning status
+    return this.workTimerService.pauseTimer(); // Now just call service method
   }
 
   incrementClicks(updateClicksUI: (clicks: number) => void): void { // Added callback parameter
     console.log("PlayScreenController: incrementClicks() - WorkSession instance:", this.workSessionInstance);
-    this.workTimerService.incrementClicks();
+    this.workTimerService.incrementClicks(); // Now just call service method
     const updatedClicks = this.workTimerService.getClicks();
     updateClicksUI(updatedClicks); // Invoke callback to update UI
-    this.updateUPM(); // Recalculate UPM whenever clicks increment
+    this.updateUPM();
   }
 
   resetSession(): boolean { // Modified to return boolean - although reset always stops timer
     console.log("PlayScreenController: resetSession() - WorkSession instance:", this.workSessionInstance);
-    this.workTimerService.resetSession();
-    this.updateUPM(); // Reset UPM to 0 on session reset
-    return this.workTimerService.isRunning(); // Return isRunning status (should be false after reset)
+    return this.workTimerService.resetSession(); // Now just call service method
   }
 
   isRunning(): boolean {
     console.log("PlayScreenController: isRunning() - WorkSession instance:", this.workSessionInstance);
-    const running = this.workTimerService.isRunning();
-    console.log("PlayScreenController: isRunning() returning:", running);
-    return running;
+    return this.workTimerService.isRunning();
   }
 
   getElapsedTimeMs(): number {
     console.log("PlayScreenController: getElapsedTimeMs() - WorkSession instance:", this.workSessionInstance);
-    const elapsed = this.workTimerService.getElapsedTimeMs();
-    console.log("PlayScreenController: getElapsedTimeMs() returning:", elapsed);
-    return elapsed;
+    return this.workTimerService.getElapsedTimeMs();
   }
 
   getClicks(): number {
     console.log("PlayScreenController: getClicks() - WorkSession instance:", this.workSessionInstance);
-    const clicks = this.workTimerService.getClicks();
-    console.log("PlayScreenController: getClicks() returning:", clicks);
-    return clicks;
+    return this.workTimerService.getClicks();
   }
 
   onElapsedTimeUpdate(callback: (elapsedTimeMs: number) => void) {
@@ -118,7 +108,7 @@ export class PlayScreenController {
 
   clearElapsedTimeUpdateCallback() {
     console.log("PlayScreenController: clearElapsedTimeUpdateCallback() called");
-    this.workTimerService.clearTimeUpdateCallback();
+    this.workTimerService.clearElapsedTimeUpdateCallback();
   }
 
   private updateUPM(): void {
