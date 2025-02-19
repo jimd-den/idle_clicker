@@ -49,6 +49,12 @@ export default function PlayScreen() {
     // Subscribe to time updates from the controller
     const updateTime = (elapsedTimeMs: number) => {
       setElapsedTime(elapsedTimeMs);
+      // Recalculate UPM and set state directly in updateTime callback
+      if (elapsedTimeMs > 0) {
+        setUpm(clicks / (elapsedTimeMs / 60000));
+      } else {
+        setUpm(0);
+      }
       console.log("PlayScreen: updateTime callback - elapsedTimeMs:", elapsedTimeMs);
     };
     controller.onElapsedTimeUpdate(updateTime);
@@ -68,21 +74,27 @@ export default function PlayScreen() {
     };
   }, [controller]); // Dependency on controller (stable instance)
 
-  // Effect to recalculate UPM whenever clicks or elapsedTime changes
-  useEffect(() => {
-    if (elapsedTime > 0) {
-      setUpm(clicks / (elapsedTime / 60000));
-    } else {
-      setUpm(0);
-    }
-    console.log("PlayScreen: useEffect (UPM calculation) - clicks:", clicks, "elapsedTime:", elapsedTime, "upm:", upm);
-  }, [clicks, elapsedTime]); // Recalculate UPM when clicks or elapsedTime changes
+  // Removed the separate useEffect for UPM calculation
+  // useEffect(() => {
+  //   if (elapsedTime > 0) {
+  //     setUpm(clicks / (elapsedTime / 60000));
+  //   } else {
+  //     setUpm(0);
+  //   }
+  //   console.log("PlayScreen: useEffect (UPM calculation) - clicks:", clicks, "elapsedTime:", elapsedTime, "upm:", upm);
+  // }, [clicks, elapsedTime]); // Recalculate UPM when clicks or elapsedTime changes
 
   // --- Event Handlers ---
   const handleIncrementClick = () => {
     console.log("PlayScreen: handleIncrementClick() called");
     controller.incrementClicks((updatedClicks) => { // Pass callback to controller
       setClicks(updatedClicks); // Update clicks state using callback
+      // Recalculate UPM and set state directly after click update
+      if (elapsedTime > 0) {
+        setUpm(updatedClicks / (elapsedTime / 60000));
+      } else {
+        setUpm(0);
+      }
       console.log("PlayScreen: handleIncrementClick() - clicks updated to:", updatedClicks);
     });
   };
@@ -101,7 +113,7 @@ export default function PlayScreen() {
 
   const handleReset = () => {
     console.log("PlayScreen: handleReset() called");
-    const updatedIsRunning = controller.resetSession(); // Get updated isRunning from resetSession
+    const updatedIsRunning = controller.resetSession(); // Get updatedIsRunning from resetSession
     setIsRunning(updatedIsRunning); // Update local isRunning state
     setElapsedTime(0); // Explicitly set elapsed time to 0 on reset
     setClicks(0); // Explicitly set clicks to 0 on reset
