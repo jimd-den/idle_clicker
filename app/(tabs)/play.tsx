@@ -4,10 +4,10 @@ import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { PlayScreenController } from '@/presentation/controllers/PlayScreenController';
+import { formatTime } from '@/utils/timeUtils'; // Import formatTime
 import { WorkSession } from '@/domain/entities/WorkSession'; // Import WorkSession
 import { MetricsDisplay } from '@/components/MetricsDisplay'; // Import MetricsDisplay
 import { TimerControls } from '@/components/TimerControls';   // Import TimerControls
-
 
 /**
  * Presentation Layer - UI (React Component)
@@ -18,7 +18,8 @@ import { TimerControls } from '@/components/TimerControls';   // Import TimerCon
  */
 export default function PlayScreen() {
   // --- UI State ---
-  const [elapsedTime, setElapsedTime] = useState(0);
+  const [elapsedTime, setElapsedTime] = useState(0); // Milliseconds elapsed - updates frequently
+  const [displayTime, setDisplayTime] = useState("00:00"); // Formatted time for display - updates every second
   const [clicks, setClicks] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [upm, setUpm] = useState(0); // State for UPM
@@ -48,10 +49,10 @@ export default function PlayScreen() {
   }, [controller]); // Dependency on controller (stable instance)
 
   useEffect(() => {
-    // Subscribe to time updates from the controller
+    // Subscribe to time updates from the controller (millisecond updates)
     const updateTime = (elapsedTimeMs: number) => {
       setElapsedTime(elapsedTimeMs);
-      // Recalculate UPM and set state directly in updateTime callback
+      // Recalculate UPM and set state directly in updateTime callback (millisecond updates)
       if (elapsedTimeMs > 0) {
         setUpm(clicks / (elapsedTimeMs / 60000));
       } else {
@@ -75,6 +76,15 @@ export default function PlayScreen() {
       console.log("PlayScreen: useEffect (onElapsedTimeUpdate) - cleanup - callback cleared, timer paused, isRunning:", isRunning);
     };
   }, [controller]); // Dependency on controller (stable instance)
+
+  useEffect(() => {
+    // Update displayTime every second based on elapsedTime
+    const intervalId = setInterval(() => {
+      setDisplayTime(formatTime(elapsedTime)); // Format and set displayTime (second updates)
+    }, 1000); // Update every 1 second
+
+    return () => clearInterval(intervalId); // Clear interval on unmount
+  }, [elapsedTime]); // Update displayTime when elapsedTime changes
 
 
   // --- Event Handlers ---
@@ -109,6 +119,7 @@ export default function PlayScreen() {
     const updatedIsRunning = controller.resetSession(); // Get updatedIsRunning from resetSession
     setIsRunning(updatedIsRunning); // Update local isRunning state
     setElapsedTime(0); // Explicitly set elapsed time to 0 on reset
+    setDisplayTime("00:00"); // Reset displayTime to 00:00 on reset
     setClicks(0); // Explicitly set clicks to 0 on reset
     setUpm(0); // Reset UPM to 0 on reset
     console.log("PlayScreen: handleReset() - session reset, isRunning:", isRunning, "elapsedTime:", 0, "clicks:", 0, "upm:", 0);
@@ -118,7 +129,7 @@ export default function PlayScreen() {
   return (
     <View style={styles.container}>
       {/* Top Module: Performance Metrics Display */}
-      <MetricsDisplay clicks={clicks} elapsedTime={elapsedTime} upm={upm} />
+      <MetricsDisplay clicks={clicks} elapsedTime={displayTime} upm={upm} /> {/* Use displayTime for Stopwatch */}
 
       {/* Middle Module: Work Unit Input */}
       <TouchableOpacity

@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { ThemedText } from './ThemedText';
-import { formatTime } from '@/utils/timeUtils'; // Assuming formatTime is in utils/timeUtils.ts
+// import { formatTime } from '@/utils/timeUtils'; // No longer needed here
 
 interface MetricsDisplayProps {
   clicks: number;
-  elapsedTime: number;
+  elapsedTime: string; // Expects formatted time string now
   upm: number;
 }
 
@@ -21,7 +21,7 @@ export function MetricsDisplay({ clicks, elapsedTime, upm }: MetricsDisplayProps
 
       <View style={styles.metricContainer}>
         <ThemedText style={styles.metricValue} type="title">
-          {formatTime(elapsedTime)}
+          {elapsedTime} {/* Now receives formatted time string */}
         </ThemedText>
         <ThemedText style={styles.metricLabel}>Stopwatch</ThemedText>
       </View>
