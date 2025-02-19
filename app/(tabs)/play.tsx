@@ -1,11 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { PlayScreenController } from '@/presentation/controllers/PlayScreenController';
 import { formatTime } from '@/utils/timeUtils';
-import { useEffect, useState } from 'react';
 
 /**
  * Presentation Layer - UI (React Component)
@@ -14,7 +13,7 @@ import { useEffect, useState } from 'react';
  * It provides the UI for tracking work units, time, and performance metrics
  * as defined in the Software Requirements Specification (SRS).
  *
- * This component interacts with the PlayScreenController to handle user
+ * This component interacts with a stable PlayScreenController instance to handle user
  * actions and update the UI based on the application state.
  */
 export default function PlayScreen() {
@@ -27,7 +26,8 @@ export default function PlayScreen() {
   const timerColor = useThemeColor({}, 'tint');
 
   // --- Controller ---
-  const controller = new PlayScreenController();
+  // Create PlayScreenController only once using useState initializer function
+  const [controller] = useState(() => new PlayScreenController());
 
   // --- Effects ---
   useEffect(() => {
@@ -36,7 +36,7 @@ export default function PlayScreen() {
     setClicks(controller.getClicks());
     setElapsedTime(controller.getElapsedTimeMs());
     console.log("PlayScreen: useEffect (initial state) - isRunning:", isRunning, "clicks:", clicks, "elapsedTime:", elapsedTime); // ADDED LOG
-  }, []); // Empty dependency array ensures this runs only once on mount
+  }, [controller]); // Dependency on controller (stable instance)
 
   useEffect(() => {
     // Subscribe to time updates from the controller
@@ -61,7 +61,7 @@ export default function PlayScreen() {
       setIsRunning(controller.isRunning());
       console.log("PlayScreen: useEffect (onElapsedTimeUpdate) - cleanup - callback cleared, timer paused, isRunning:", isRunning); // ADDED LOG
     };
-  }, [controller]); // Dependency on controller ensures effect re-runs if controller instance changes (unlikely in this setup)
+  }, [controller]); // Dependency on controller (stable instance)
 
   useEffect(() => {
     setIsRunning(controller.isRunning());
