@@ -8,6 +8,8 @@ import { formatTime } from '@/utils/timeUtils'; // Import formatTime
 import { WorkSession } from '@/domain/entities/WorkSession'; // Import WorkSession
 import { MetricsDisplay } from '@/components/MetricsDisplay'; // Import MetricsDisplay
 import { TimerControls } from '@/components/TimerControls';   // Import TimerControls
+import { useWorkSession } from '@/contexts/WorkSessionContext'; // Import useWorkSession Hook
+
 
 /**
  * Presentation Layer - UI (React Component)
@@ -28,12 +30,8 @@ export default function PlayScreen() {
   const timerColor = useThemeColor({}, 'tint');
 
   // --- Domain Entity Instance ---
-  // Create WorkSession instance using useRef to ensure persistence across re-renders
-  const workSessionRef = useRef<WorkSession | null>(null);
-  if (!workSessionRef.current) {
-    workSessionRef.current = new WorkSession();
-  }
-  const workSession = workSessionRef.current; // Access current WorkSession instance
+  // Get WorkSession instance from context
+  const workSession = useWorkSession();
 
   // --- Controller ---
   // Create PlayScreenController only once using useState initializer function, passing persistent workSession instance
