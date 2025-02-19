@@ -109,12 +109,14 @@ export default function PlayScreen() {
     if (isRunning) {
       console.log("PlayScreen: handleStartPause() - isRunning is true, pausing timer"); // ADDED LOG
       updatedIsRunning = controller.pauseTimer(); // Use controller to pause and get isRunning status
+      console.log("PlayScreen: handleStartPause() - controller.pauseTimer() returned:", updatedIsRunning); // ADDED LOG
     } else {
       console.log("PlayScreen: handleStartPause() - isRunning is false, starting timer"); // ADDED LOG
       updatedIsRunning = controller.startTimer(); // Use controller to start and get isRunning status
+      console.log("PlayScreen: handleStartPause() - controller.startTimer() returned:", updatedIsRunning); // ADDED LOG
     }
-    setIsRunning(updatedIsRunning); // Update local isRunning state based on controller status
-    console.log("PlayScreen: handleStartPause() - isRunning after toggle:", updatedIsRunning);
+    setIsRunning(updatedIsRunning); // Update local isRunning state based on controller status - NOW USING RETURNED VALUE
+    console.log("PlayScreen: handleStartPause() - isRunning after toggle:", isRunning); // LOGGING isRunning AFTER state update
   };
 
   const handleReset = () => {
