@@ -78,8 +78,8 @@ export default function PlayScreen() {
   const handleReset = () => {
     controller.resetSession();
     setIsRunning(controller.isRunning()); // Update local isRunning state
-    setElapsedTime(controller.getElapsedTimeMs()); // Update local elapsed time state
-    setClicks(controller.getClicks()); // Update local clicks state
+    setElapsedTime(0); // Explicitly set elapsed time to 0 on reset
+    setClicks(0); // Explicitly set clicks to 0 on reset
   };
 
   // --- Render ---
