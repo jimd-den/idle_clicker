@@ -49,12 +49,6 @@ export default function PlayScreen() {
     // Subscribe to time updates from the controller
     const updateTime = (elapsedTimeMs: number) => {
       setElapsedTime(elapsedTimeMs);
-      // Recalculate UPM whenever elapsed time updates
-      if (elapsedTimeMs > 0) {
-        setUpm(clicks / (elapsedTimeMs / 60000)); // Calculate UPM
-      } else {
-        setUpm(0); // UPM is 0 if no time has elapsed
-      }
       console.log("PlayScreen: updateTime callback - elapsedTimeMs:", elapsedTimeMs);
     };
     controller.onElapsedTimeUpdate(updateTime);
@@ -74,23 +68,21 @@ export default function PlayScreen() {
     };
   }, [controller]); // Dependency on controller (stable instance)
 
-  // Removed this useEffect as it's no longer needed and potentially problematic
-  // useEffect(() => {
-  //   setIsRunning(controller.isRunning());
-  //   console.log("PlayScreen: useEffect (isRunning update) - isRunning:", isRunning);
-  // }, [controller.isRunning()]);
+  // Effect to recalculate UPM whenever clicks or elapsedTime changes
+  useEffect(() => {
+    if (elapsedTime > 0) {
+      setUpm(clicks / (elapsedTime / 60000));
+    } else {
+      setUpm(0);
+    }
+    console.log("PlayScreen: useEffect (UPM calculation) - clicks:", clicks, "elapsedTime:", elapsedTime, "upm:", upm);
+  }, [clicks, elapsedTime]); // Recalculate UPM when clicks or elapsedTime changes
 
   // --- Event Handlers ---
   const handleIncrementClick = () => {
     console.log("PlayScreen: handleIncrementClick() called");
     controller.incrementClicks((updatedClicks) => { // Pass callback to controller
       setClicks(updatedClicks); // Update clicks state using callback
-      // Recalculate UPM when clicks update
-      if (elapsedTime > 0) {
-        setUpm(updatedClicks / (elapsedTime / 60000)); // Calculate UPM
-      } else {
-        setUpm(0); // UPM is 0 if no time has elapsed
-      }
       console.log("PlayScreen: handleIncrementClick() - clicks updated to:", updatedClicks);
     });
   };
