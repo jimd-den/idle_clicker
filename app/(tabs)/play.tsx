@@ -105,18 +105,17 @@ export default function PlayScreen() {
 
   const handleStartPause = () => {
     console.log("PlayScreen: handleStartPause() called - isRunning before toggle:", isRunning);
-    let updatedIsRunning: boolean;
-    if (isRunning) {
-      console.log("PlayScreen: handleStartPause() - isRunning is true, pausing timer"); // ADDED LOG
-      updatedIsRunning = controller.pauseTimer(); // Use controller to pause and get isRunning status
-      console.log("PlayScreen: handleStartPause() - controller.pauseTimer() returned:", updatedIsRunning); // ADDED LOG
-    } else {
+    setIsRunning(!isRunning); // Optimistically update local isRunning state immediately for UI feedback
+    const nextIsRunning = !isRunning; // capture the toggled state for logging
+
+    if (nextIsRunning) {
       console.log("PlayScreen: handleStartPause() - isRunning is false, starting timer"); // ADDED LOG
-      updatedIsRunning = controller.startTimer(); // Use controller to start and get isRunning status
-      console.log("PlayScreen: handleStartPause() - controller.startTimer() returned:", updatedIsRunning); // ADDED LOG
+      controller.startTimer(); // Use controller to start timer
+    } else {
+      console.log("PlayScreen: handleStartPause() - isRunning is true, pausing timer"); // ADDED LOG
+      controller.pauseTimer(); // Use controller to pause timer
     }
-    setIsRunning(updatedIsRunning); // Update local isRunning state based on controller status - NOW USING RETURNED VALUE
-    console.log("PlayScreen: handleStartPause() - isRunning after toggle:", isRunning); // LOGGING isRunning AFTER state update
+    console.log("PlayScreen: handleStartPause() - isRunning after toggle:", nextIsRunning); // LOGGING isRunning AFTER state update
   };
 
   const handleReset = () => {
