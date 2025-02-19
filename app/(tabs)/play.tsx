@@ -50,11 +50,6 @@ export default function PlayScreen() {
     setClicks(initialClicks);
     setElapsedTime(initialElapsedTime);
     setDisplayTime(formatTime(initialElapsedTime)); // Format initial elapsed time
-    if (initialElapsedTime > 0) {
-        setUpm(initialClicks / (initialElapsedTime / 60000)); // Calculate initial UPM
-    } else {
-        setUpm(0);
-    }
 
 
     console.log("PlayScreen: useEffect (initial state) - isRunning:", initialIsRunning, "clicks:", initialClicks, "elapsedTime:", initialElapsedTime, "upm:", upm);
@@ -65,25 +60,25 @@ export default function PlayScreen() {
     // Subscribe to time updates from the controller (millisecond updates)
     const updateTime = (elapsedTimeMs: number) => {
       setElapsedTime(elapsedTimeMs);
-      // Recalculate UPM and set state directly in updateTime callback (millisecond updates)
-      if (elapsedTimeMs > 0) {
-        setUpm(clicks / (elapsedTimeMs / 60000));
-      } else {
-        setUpm(0);
-      }
-      console.log("PlayScreen: updateTime callback - elapsedTimeMs:", elapsedTimeMs, "upm:", upm);
+      // UPM is updated via separate callback now, only elapsedTime is updated here
+      console.log("PlayScreen: updateTime callback - elapsedTimeMs:", elapsedTimeMs);
     };
     controller.onElapsedTimeUpdate(updateTime);
     console.log("PlayScreen: useEffect (onElapsedTimeUpdate) - callback set");
 
-    // Start the timer when the screen loads (FR-PLAY-3) - REMOVE THIS, start should be user initiated
-    // controller.startTimer();
-    // setIsRunning(controller.isRunning());
-    // console.log("PlayScreen: useEffect (onElapsedTimeUpdate) - timer started, isRunning:", isRunning);
+    // Subscribe to UPM updates from the controller (millisecond updates - as fast as possible)
+    const updateUPM = (currentUPM: number) => {
+      setUpm(currentUPM); // Update UPM state from controller callback
+      console.log("PlayScreen: updateUPM callback - upm:", currentUPM);
+    };
+    controller.onUPMUpdate(updateUPM);
+    console.log("PlayScreen: useEffect (onUPMUpdate) - UPM callback set");
 
-    // Cleanup on unmount: clear time update callback and pause timer
+
+    // Cleanup on unmount: clear time update callbacks and pause timer
     return () => {
       controller.clearElapsedTimeUpdateCallback();
+      controller.clearUPMUpdateCallback(); // Clear UPM callback as well
       controller.pauseTimer();
       setIsRunning(controller.isRunning());
       console.log("PlayScreen: useEffect (onElapsedTimeUpdate) - cleanup - callback cleared, timer paused, isRunning:", isRunning);
@@ -94,7 +89,7 @@ export default function PlayScreen() {
     // Update displayTime every second based on elapsedTime
     const intervalId = setInterval(() => {
       setDisplayTime(formatTime(elapsedTime)); // Format and set displayTime (second updates)
-    }, 1000); // Update every 1 second
+    }, 1000); // Update every 1 second - CORRECT INTERVAL
 
     return () => clearInterval(intervalId); // Clear interval on unmount
   }, [elapsedTime]); // Update displayTime when elapsedTime changes
@@ -105,13 +100,7 @@ export default function PlayScreen() {
     console.log("PlayScreen: handleIncrementClick() called");
     controller.incrementClicks((updatedClicks) => { // Pass callback to controller
       setClicks(updatedClicks); // Update clicks state using callback
-      // Recalculate UPM and set state directly after click update
-      if (elapsedTime > 0) {
-        setUpm(updatedClicks / (elapsedTime / 60000));
-      } else {
-        setUpm(0);
-      }
-      console.log("PlayScreen: handleIncrementClick() - clicks updated to:", updatedClicks, "upm:", upm);
+      console.log("PlayScreen: handleIncrementClick() - clicks updated to:", updatedClicks);
     });
   };
 
