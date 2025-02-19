@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react'; // Import useRef
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -11,11 +11,8 @@ import { WorkSession } from '@/domain/entities/WorkSession'; // Import WorkSessi
  * Presentation Layer - UI (React Component)
  *
  * PlayScreen: Implements the main screen of the Non-Idle Clicker app.
- * It provides the UI for tracking work units, time, and performance metrics
- * as defined in the Software Requirements Specification (SRS).
- *
- * This component now creates and manages the WorkSession instance,
- * passing it down to the PlayScreenController.
+ * It creates and manages the WorkSession and PlayScreenController instances,
+ * ensuring their persistence across re-renders.
  */
 export default function PlayScreen() {
   // --- UI State ---
@@ -27,11 +24,15 @@ export default function PlayScreen() {
   const timerColor = useThemeColor({}, 'tint');
 
   // --- Domain Entity Instance ---
-  // Create WorkSession instance in PlayScreen and persist it
-  const workSession = new WorkSession(); // WorkSession created here, in PlayScreen
+  // Create WorkSession instance using useRef to ensure persistence across re-renders
+  const workSessionRef = useRef<WorkSession | null>(null);
+  if (!workSessionRef.current) {
+    workSessionRef.current = new WorkSession();
+  }
+  const workSession = workSessionRef.current; // Access current WorkSession instance
 
   // --- Controller ---
-  // Create PlayScreenController only once using useState initializer function, passing workSession instance
+  // Create PlayScreenController only once using useState initializer function, passing persistent workSession instance
   const [controller] = useState(() => new PlayScreenController(workSession)); // Pass workSession to controller
 
   // --- Effects ---
