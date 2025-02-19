@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { PlayScreenController } from '@/presentation/controllers/PlayScreenController';
 import { formatTime } from '@/utils/timeUtils';
+import { useEffect, useState } from 'react';
 
 /**
  * Presentation Layer - UI (React Component)
@@ -168,7 +169,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', // Arrange metrics horizontally
     justifyContent: 'space-around', // Distribute space evenly between metrics
     marginBottom: 60, // Increased marginBottom to push buttons down - IMPORTANT
-    marginTop: 20, // Added marginTop to give space from top edge - IMPORTANT
+    marginTop: 40, // Increased marginTop even more - IMPORTANT
   },
   metricContainer: {
     alignItems: 'center', // Center content within each metric container
