@@ -19,6 +19,7 @@ export default function PlayScreen() {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [clicks, setClicks] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
+  const [upm, setUpm] = useState(0); // State for UPM
 
   // --- Styling ---
   const timerColor = useThemeColor({}, 'tint');
@@ -48,6 +49,12 @@ export default function PlayScreen() {
     // Subscribe to time updates from the controller
     const updateTime = (elapsedTimeMs: number) => {
       setElapsedTime(elapsedTimeMs);
+      // Recalculate UPM whenever elapsed time updates
+      if (elapsedTimeMs > 0) {
+        setUpm(clicks / (elapsedTimeMs / 60000)); // Calculate UPM
+      } else {
+        setUpm(0); // UPM is 0 if no time has elapsed
+      }
       console.log("PlayScreen: updateTime callback - elapsedTimeMs:", elapsedTimeMs);
     };
     controller.onElapsedTimeUpdate(updateTime);
@@ -78,6 +85,12 @@ export default function PlayScreen() {
     console.log("PlayScreen: handleIncrementClick() called");
     controller.incrementClicks((updatedClicks) => { // Pass callback to controller
       setClicks(updatedClicks); // Update clicks state using callback
+      // Recalculate UPM when clicks update
+      if (elapsedTime > 0) {
+        setUpm(updatedClicks / (elapsedTime / 60000)); // Calculate UPM
+      } else {
+        setUpm(0); // UPM is 0 if no time has elapsed
+      }
       console.log("PlayScreen: handleIncrementClick() - clicks updated to:", updatedClicks);
     });
   };
@@ -100,7 +113,8 @@ export default function PlayScreen() {
     setIsRunning(updatedIsRunning); // Update local isRunning state
     setElapsedTime(0); // Explicitly set elapsed time to 0 on reset
     setClicks(0); // Explicitly set clicks to 0 on reset
-    console.log("PlayScreen: handleReset() - session reset, isRunning:", isRunning, "elapsedTime:", 0, "clicks:", 0);
+    setUpm(0); // Reset UPM to 0 on reset
+    console.log("PlayScreen: handleReset() - session reset, isRunning:", isRunning, "elapsedTime:", 0, "clicks:", 0, "upm:", 0);
   };
 
   // --- Render ---
@@ -124,7 +138,7 @@ export default function PlayScreen() {
 
         <View style={styles.metricContainer}>
           <ThemedText style={styles.metricValue} type="title">
-            {(clicks / (elapsedTime / 60000)).toFixed(2)} {/* UPM */}
+            {upm.toFixed(3)} {/* UPM with 3 decimal places */}
           </ThemedText>
           <ThemedText style={styles.metricLabel}>UPM</ThemedText>
         </View>
