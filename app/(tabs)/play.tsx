@@ -90,7 +90,7 @@ export default function PlayScreen() {
         <ThemedText style={[styles.timerText, { color: timerColor }]} type="title">
           {formatTime(elapsedTime)} {/* FR-PLAY-2: Stopwatch Display */}
         </ThemedText>
-        <ThemedText>
+        <ThemedText style={styles.unitsPerMinuteText}> {/* Added style here */}
           Units per minute:{' '}
           {(clicks / (elapsedTime / 60000)).toFixed(2)} {/* FR-PLAY-1: CPM Display */}
         </ThemedText>
@@ -133,53 +133,58 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'space-around',
+    justifyContent: 'space-around', // Changed to space-around to distribute space more evenly
     padding: 20,
   },
   timerContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 30, // Increased marginBottom for more spacing
   },
   timerText: {
-    fontSize: 48,
+    fontSize: 64, // Increased timer font size
     fontWeight: 'bold',
+  },
+  unitsPerMinuteText: { // Style for units per minute text
+    fontSize: 20, // Slightly larger than default
+    marginTop: 8, // Add a little space above it
   },
   clickButton: {
     backgroundColor: '#0a7ea4',
-    paddingVertical: 20,
-    paddingHorizontal: 40,
-    borderRadius: 10,
+    paddingVertical: 30, // Increased vertical padding
+    paddingHorizontal: 60, // Increased horizontal padding
+    borderRadius: 15, // Slightly larger borderRadius
+    marginBottom: 40, // Increased marginBottom
   },
   clickButtonText: {
     color: '#fff',
-    fontSize: 24,
+    fontSize: 32, // Increased font size
     fontWeight: 'bold',
   },
   controlsContainer: {
     flexDirection: 'row',
-    gap: 20,
+    gap: 30, // Increased gap between buttons
     marginBottom: 20,
   },
   actionButton: {
     backgroundColor: '#687076',
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 8,
+    paddingVertical: 20, // Increased vertical padding
+    paddingHorizontal: 40, // Increased horizontal padding
+    borderRadius: 10, // Slightly larger borderRadius
   },
   actionButtonText: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: 24, // Increased font size
     fontWeight: 'bold',
   },
   resetButton: {
     backgroundColor: '#cc3333',
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 8,
+    paddingVertical: 20, // Increased vertical padding
+    paddingHorizontal: 40, // Increased horizontal padding
+    borderRadius: 10, // Slightly larger borderRadius
   },
   resetButtonText: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: 24, // Increased font size
     fontWeight: 'bold',
   },
 });
