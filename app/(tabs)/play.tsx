@@ -146,12 +146,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    justifyContent: 'space-between', // Changed to space-between for better vertical distribution
+    justifyContent: 'space-around', // Changed to space-around for better vertical distribution - IMPORTANT
   },
   topModuleContainer: {
     flexDirection: 'row', // Arrange metrics horizontally
     justifyContent: 'space-around', // Distribute space evenly between metrics
-    marginBottom: 40, // Add space below the top module
+    marginBottom: 60, // Increased marginBottom to push buttons down - IMPORTANT
+    marginTop: 20, // Added marginTop to give space from top edge - IMPORTANT
   },
   metricContainer: {
     alignItems: 'center', // Center content within each metric container
@@ -184,7 +185,7 @@ const styles = StyleSheet.create({
     paddingVertical: 40, // Further increased vertical padding for click button
     paddingHorizontal: 80, // Further increased horizontal padding for click button
     borderRadius: 20, // Further increased borderRadius for click button
-    marginBottom: 40,
+    marginBottom: 30, // Reduced marginBottom slightly
     alignSelf: 'center', // Center the click button horizontally
   },
   clickButtonText: {
@@ -197,6 +198,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around', // Distribute space evenly between control buttons
     marginBottom: 20,
+    marginTop: 30, // Added marginTop to separate from click button - IMPORTANT
   },
   actionButton: {
     backgroundColor: '#687076',
