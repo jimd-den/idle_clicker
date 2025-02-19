@@ -5,6 +5,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { PlayScreenController } from '@/presentation/controllers/PlayScreenController';
 import { formatTime } from '@/utils/timeUtils';
+import { WorkSession } from '@/domain/entities/WorkSession'; // Import WorkSession
 
 /**
  * Presentation Layer - UI (React Component)
@@ -26,8 +27,10 @@ export default function PlayScreen() {
   const timerColor = useThemeColor({}, 'tint');
 
   // --- Controller ---
-  // Create PlayScreenController only once using useState initializer function
-  const [controller] = useState(() => new PlayScreenController());
+  // Create WorkSession instance OUTSIDE PlayScreenController
+  const workSession = new WorkSession();
+  // Create PlayScreenController only once using useState initializer function, passing workSession
+  const [controller] = useState(() => new PlayScreenController(workSession)); // Pass workSession
 
   // --- Effects ---
   useEffect(() => {

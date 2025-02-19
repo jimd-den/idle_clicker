@@ -24,14 +24,18 @@ export class PlayScreenController {
   private workTimerService: WorkTimerService;
   private workSessionInstance: WorkSession; // Keep track of WorkSession instance
 
-  constructor() {
+  /**
+   * Constructor for PlayScreenController.
+   * Now accepts a WorkSession instance as a dependency.
+   *
+   * @param workSession - The WorkSession instance to use.
+   */
+  constructor(workSession: WorkSession) { // Modified constructor to accept WorkSession
     // Infrastructure Layer dependency
     const timerService = new TimerServiceImpl();
-    // Domain Layer dependency (WorkSession entity)
-    const workSession = new WorkSession();
-    this.workSessionInstance = workSession; // Store the WorkSession instance
+    this.workSessionInstance = workSession; // Use the injected WorkSession instance
 
-    // Use Cases - Domain Layer logic, now instantiated here and passed to service
+    // Use Cases - Domain Layer logic, now instantiated with the injected WorkSession
     const startTimerUseCase = new StartTimerUseCase(workSession);
     const pauseTimerUseCase = new PauseTimerUseCase(workSession);
     const incrementClicksUseCase = new IncrementClicksUseCase(workSession);
