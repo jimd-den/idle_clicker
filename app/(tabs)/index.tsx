@@ -1,4 +1,5 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import { Image, StyleSheet, Platform, TouchableOpacity } from 'react-native';
+import { Link } from 'expo-router';
 
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
@@ -56,8 +57,7 @@ export default function HomeScreen() {
           Play
         </Link>
       </TouchableOpacity>
-
-      <ThemedView style={styles.stepContainer}>
+    </ThemedView>
 
 const styles = StyleSheet.create({
   titleContainer: {
