@@ -86,14 +86,27 @@ export default function PlayScreen() {
   return (
     <View style={styles.container}>
       {/* Top Module: Performance Metrics Display */}
-      <View style={styles.timerContainer}>
-        <ThemedText style={[styles.timerText, { color: timerColor }]} type="title">
-          {formatTime(elapsedTime)} {/* FR-PLAY-2: Stopwatch Display */}
-        </ThemedText>
-        <ThemedText style={styles.unitsPerMinuteText}> {/* Added style here */}
-          Units per minute:{' '}
-          {(clicks / (elapsedTime / 60000)).toFixed(2)} {/* FR-PLAY-1: CPM Display */}
-        </ThemedText>
+      <View style={styles.topModuleContainer}>
+        <View style={styles.metricContainer}>
+          <ThemedText style={styles.metricValue} type="title">
+            {clicks} {/* Total Units */}
+          </ThemedText>
+          <ThemedText style={styles.metricLabel}>Total Units</ThemedText>
+        </View>
+
+        <View style={styles.metricContainer}>
+          <ThemedText style={styles.metricValue} type="title">
+            {formatTime(elapsedTime)} {/* Stopwatch */}
+          </ThemedText>
+          <ThemedText style={styles.metricLabel}>Stopwatch</ThemedText>
+        </View>
+
+        <View style={styles.metricContainer}>
+          <ThemedText style={styles.metricValue} type="title">
+            {(clicks / (elapsedTime / 60000)).toFixed(2)} {/* UPM */}
+          </ThemedText>
+          <ThemedText style={styles.metricLabel}>UPM</ThemedText>
+        </View>
       </View>
 
       {/* Middle Module: Work Unit Input */}
@@ -132,59 +145,85 @@ export default function PlayScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'space-around', // Changed to space-around to distribute space more evenly
     padding: 20,
+    justifyContent: 'space-between', // Changed to space-between for better vertical distribution
   },
-  timerContainer: {
+  topModuleContainer: {
+    flexDirection: 'row', // Arrange metrics horizontally
+    justifyContent: 'space-around', // Distribute space evenly between metrics
+    marginBottom: 40, // Add space below the top module
+  },
+  metricContainer: {
+    alignItems: 'center', // Center content within each metric container
+  },
+  metricValue: {
+    fontSize: 40, // Slightly smaller title font for metrics
+    fontWeight: 'bold',
+    lineHeight: 40,
+    textAlign: 'center', // Center align the metric value
+  },
+  metricLabel: {
+    fontSize: 16,
+    textAlign: 'center', // Center align the metric label
+    color: '#687076', // Example label color
+  },
+  timerContainer: { // Removed - no longer directly used
     alignItems: 'center',
-    marginBottom: 30, // Increased marginBottom for more spacing
+    marginBottom: 30,
   },
-  timerText: {
-    fontSize: 64, // Increased timer font size
+  timerText: { // Removed - no longer directly used
+    fontSize: 64,
     fontWeight: 'bold',
   },
-  unitsPerMinuteText: { // Style for units per minute text
-    fontSize: 20, // Slightly larger than default
-    marginTop: 8, // Add a little space above it
+  unitsPerMinuteText: { // Removed - no longer directly used
+    fontSize: 20,
+    marginTop: 8,
   },
   clickButton: {
     backgroundColor: '#0a7ea4',
-    paddingVertical: 30, // Increased vertical padding
-    paddingHorizontal: 60, // Increased horizontal padding
-    borderRadius: 15, // Slightly larger borderRadius
-    marginBottom: 40, // Increased marginBottom
+    paddingVertical: 40, // Further increased vertical padding for click button
+    paddingHorizontal: 80, // Further increased horizontal padding for click button
+    borderRadius: 20, // Further increased borderRadius for click button
+    marginBottom: 40,
+    alignSelf: 'center', // Center the click button horizontally
   },
   clickButtonText: {
     color: '#fff',
-    fontSize: 32, // Increased font size
+    fontSize: 36, // Further increased font size for click button
     fontWeight: 'bold',
+    textAlign: 'center', // Center align the text in the click button
   },
   controlsContainer: {
     flexDirection: 'row',
-    gap: 30, // Increased gap between buttons
+    justifyContent: 'space-around', // Distribute space evenly between control buttons
     marginBottom: 20,
   },
   actionButton: {
     backgroundColor: '#687076',
-    paddingVertical: 20, // Increased vertical padding
-    paddingHorizontal: 40, // Increased horizontal padding
-    borderRadius: 10, // Slightly larger borderRadius
+    paddingVertical: 20,
+    paddingHorizontal: 40,
+    borderRadius: 10,
+    flex: 1, // Allow buttons to take equal width
+    marginHorizontal: 5, // Add a little horizontal margin between buttons
   },
   actionButtonText: {
     color: '#fff',
-    fontSize: 24, // Increased font size
+    fontSize: 24,
     fontWeight: 'bold',
+    textAlign: 'center', // Center align the text in action buttons
   },
   resetButton: {
     backgroundColor: '#cc3333',
-    paddingVertical: 20, // Increased vertical padding
-    paddingHorizontal: 40, // Increased horizontal padding
-    borderRadius: 10, // Slightly larger borderRadius
+    paddingVertical: 20,
+    paddingHorizontal: 40,
+    borderRadius: 10,
+    flex: 1, // Allow buttons to take equal width
+    marginHorizontal: 5, // Add a little horizontal margin between buttons
   },
   resetButtonText: {
     color: '#fff',
-    fontSize: 24, // Increased font size
+    fontSize: 24,
     fontWeight: 'bold',
+    textAlign: 'center', // Center align the text in reset button
   },
 });
