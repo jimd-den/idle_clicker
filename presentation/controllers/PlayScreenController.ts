@@ -44,41 +44,54 @@ export class PlayScreenController {
       resetSessionUseCase,
       timerService
     );
+      console.log("PlayScreenController: constructor - WorkTimerService created"); // ADDED LOG
   }
 
   startTimer(): void {
+    console.log("PlayScreenController: startTimer() called"); // ADDED LOG
     this.workTimerService.startTimer();
   }
 
   pauseTimer(): void {
+    console.log("PlayScreenController: pauseTimer() called"); // ADDED LOG
     this.workTimerService.pauseTimer();
   }
 
   incrementClicks(): void {
+    console.log("PlayScreenController: incrementClicks() called"); // ADDED LOG
     this.workTimerService.incrementClicks();
   }
 
   resetSession(): void {
+    console.log("PlayScreenController: resetSession() called"); // ADDED LOG
     this.workTimerService.resetSession();
   }
 
   isRunning(): boolean {
-    return this.workTimerService.isRunning();
+    const running = this.workTimerService.isRunning();
+    console.log("PlayScreenController: isRunning() returning:", running); // ADDED LOG
+    return running;
   }
 
   getElapsedTimeMs(): number {
-    return this.workTimerService.getElapsedTimeMs();
+    const elapsed = this.workTimerService.getElapsedTimeMs();
+    console.log("PlayScreenController: getElapsedTimeMs() returning:", elapsed); // ADDED LOG
+    return elapsed;
   }
 
   getClicks(): number {
-    return this.workTimerService.getClicks();
+    const clicks = this.workTimerService.getClicks();
+    console.log("PlayScreenController: getClicks() returning:", clicks); // ADDED LOG
+    return clicks;
   }
 
   onElapsedTimeUpdate(callback: (elapsedTimeMs: number) => void) {
+    console.log("PlayScreenController: onElapsedTimeUpdate() setting callback"); // ADDED LOG
     this.workTimerService.onElapsedTimeUpdate(callback);
   }
 
   clearElapsedTimeUpdateCallback() {
+    console.log("PlayScreenController: clearElapsedTimeUpdateCallback() called"); // ADDED LOG
     this.workTimerService.clearElapsedTimeUpdateCallback();
   }
 }
