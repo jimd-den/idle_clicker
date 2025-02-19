@@ -13,14 +13,37 @@
  */
 
 import { WorkTimerService } from '@/application/services/WorkTimerService';
-import { TimerServiceImpl } from '@/infrastructure/TimerServiceImpl'; // Import the infrastructure implementation
+import { TimerServiceImpl } from '@/infrastructure/TimerServiceImpl';
+import { StartTimerUseCase } from '@/domain/use_cases/StartTimerUseCase';
+import { PauseTimerUseCase } from '@/domain/use_cases/PauseTimerUseCase';
+import { IncrementClicksUseCase } from '@/domain/use_cases/IncrementClicksUseCase';
+import { ResetSessionUseCase } from '@/domain/use_cases/ResetSessionUseCase';
+import { WorkSession } from '@/domain/entities/WorkSession';
 
 export class PlayScreenController {
   private workTimerService: WorkTimerService;
 
   constructor() {
-    // In a real app, you might use Dependency Injection to provide TimerServiceImpl
-    this.workTimerService = new WorkTimerService(new TimerServiceImpl());
+    // Infrastructure Layer dependency
+    const timerService = new TimerServiceImpl();
+    // Domain Layer dependency (WorkSession entity)
+    const workSession = new WorkSession();
+
+    // Use Cases - Domain Layer logic, now instantiated here and passed to service
+    const startTimerUseCase = new StartTimerUseCase(workSession);
+    const pauseTimerUseCase = new PauseTimerUseCase(workSession);
+    const incrementClicksUseCase = new IncrementClicksUseCase(workSession);
+    const resetSessionUseCase = new ResetSessionUseCase(workSession);
+
+
+    // Application Layer - WorkTimerService, now receiving Use Cases and TimerService
+    this.workTimerService = new WorkTimerService(
+      startTimerUseCase,
+      pauseTimerUseCase,
+      incrementClicksUseCase,
+      resetSessionUseCase,
+      timerService
+    );
   }
 
   startTimer(): void {

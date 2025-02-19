@@ -25,12 +25,31 @@ export class WorkTimerService {
   private resetSessionUseCase: ResetSessionUseCase;
   private timerService: TimerService;
 
-  constructor(timerService: TimerService) {
+  /**
+   * Constructor for WorkTimerService.
+   *
+   * It now receives instances of Use Cases and TimerService as dependencies.
+   * This is a step towards Dependency Injection, making the service
+   * more flexible and testable.
+   *
+   * @param startTimerUseCase - Use case for starting the timer.
+   * @param pauseTimerUseCase - Use case for pausing the timer.
+   * @param incrementClicksUseCase - Use case for incrementing clicks.
+   * @param resetSessionUseCase - Use case for resetting the session.
+   * @param timerService - Infrastructure service for timer operations.
+   */
+  constructor(
+    startTimerUseCase: StartTimerUseCase,
+    pauseTimerUseCase: PauseTimerUseCase,
+    incrementClicksUseCase: IncrementClicksUseCase,
+    resetSessionUseCase: ResetSessionUseCase,
+    timerService: TimerService
+  ) {
     this.workSession = new WorkSession();
-    this.startTimerUseCase = new StartTimerUseCase(this.workSession);
-    this.pauseTimerUseCase = new PauseTimerUseCase(this.workSession);
-    this.incrementClicksUseCase = new IncrementClicksUseCase(this.workSession);
-    this.resetSessionUseCase = new ResetSessionUseCase(this.workSession);
+    this.startTimerUseCase = startTimerUseCase;
+    this.pauseTimerUseCase = pauseTimerUseCase;
+    this.incrementClicksUseCase = incrementClicksUseCase;
+    this.resetSessionUseCase = resetSessionUseCase;
     this.timerService = timerService;
 
     this.timerService.onTimeUpdate((elapsedTimeMs) => {
