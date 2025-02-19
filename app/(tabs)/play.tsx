@@ -4,8 +4,10 @@ import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { PlayScreenController } from '@/presentation/controllers/PlayScreenController';
-import { formatTime } from '@/utils/timeUtils';
 import { WorkSession } from '@/domain/entities/WorkSession'; // Import WorkSession
+import { MetricsDisplay } from '@/components/MetricsDisplay'; // Import MetricsDisplay
+import { TimerControls } from '@/components/TimerControls';   // Import TimerControls
+
 
 /**
  * Presentation Layer - UI (React Component)
@@ -74,15 +76,6 @@ export default function PlayScreen() {
     };
   }, [controller]); // Dependency on controller (stable instance)
 
-  // Removed the separate useEffect for UPM calculation
-  // useEffect(() => {
-  //   if (elapsedTime > 0) {
-  //     setUpm(clicks / (elapsedTime / 60000));
-  //   } else {
-  //     setUpm(0);
-  //   }
-  //   console.log("PlayScreen: useEffect (UPM calculation) - clicks:", clicks, "elapsedTime:", elapsedTime, "upm:", upm);
-  // }, [clicks, elapsedTime]); // Recalculate UPM when clicks or elapsedTime changes
 
   // --- Event Handlers ---
   const handleIncrementClick = () => {
@@ -103,9 +96,9 @@ export default function PlayScreen() {
     console.log("PlayScreen: handleStartPause() called - isRunning before toggle:", isRunning);
     let updatedIsRunning: boolean;
     if (controller.isRunning()) {
-      updatedIsRunning = controller.pauseTimer(); // Get updated isRunning from pauseTimer
+      updatedIsRunning = controller.pauseTimer(); // Get updatedIsRunning from pauseTimer
     } else {
-      updatedIsRunning = controller.startTimer(); // Get updated isRunning from startTimer
+      updatedIsRunning = controller.startTimer(); // Get updatedIsRunning from startTimer
     }
     setIsRunning(updatedIsRunning); // Update local isRunning state to reflect changes
     console.log("PlayScreen: handleStartPause() - isRunning after toggle:", updatedIsRunning);
@@ -125,28 +118,7 @@ export default function PlayScreen() {
   return (
     <View style={styles.container}>
       {/* Top Module: Performance Metrics Display */}
-      <View style={styles.topModuleContainer}>
-        <View style={styles.metricContainer}>
-          <ThemedText style={styles.metricValue} type="title">
-            {clicks} {/* Total Units */}
-          </ThemedText>
-          <ThemedText style={styles.metricLabel}>Total Units</ThemedText>
-        </View>
-
-        <View style={styles.metricContainer}>
-          <ThemedText style={styles.metricValue} type="title">
-            {formatTime(elapsedTime)} {/* Stopwatch */}
-          </ThemedText>
-          <ThemedText style={styles.metricLabel}>Stopwatch</ThemedText>
-        </View>
-
-        <View style={styles.metricContainer}>
-          <ThemedText style={styles.metricValue} type="title">
-            {upm.toFixed(3)} {/* UPM with 3 decimal places */}
-          </ThemedText>
-          <ThemedText style={styles.metricLabel}>UPM</ThemedText>
-        </View>
-      </View>
+      <MetricsDisplay clicks={clicks} elapsedTime={elapsedTime} upm={upm} />
 
       {/* Middle Module: Work Unit Input */}
       <TouchableOpacity
@@ -158,24 +130,11 @@ export default function PlayScreen() {
       </TouchableOpacity>
 
       {/* Bottom Module: Timer Control */}
-      <View style={styles.controlsContainer}>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={handleStartPause}
-          accessibilityLabel={isRunning ? 'Pause Timer' : 'Start Timer'}
-        >
-          <Text style={styles.actionButtonText}>
-            {isRunning ? 'Pause' : 'Start'} {/* FR-PLAY-7: Play/Pause Button */}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.resetButton}
-          onPress={handleReset}
-          accessibilityLabel="Reset Session"
-        >
-          <Text style={styles.resetButtonText}>Reset</Text>
-        </TouchableOpacity>
-      </View>
+      <TimerControls
+        isRunning={isRunning}
+        onStartPause={handleStartPause}
+        onReset={handleReset}
+      />
     </View>
   );
 }
@@ -186,38 +145,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     justifyContent: 'space-around', // Changed to space-around for better vertical distribution - IMPORTANT
-  },
-  topModuleContainer: {
-    flexDirection: 'row', // Arrange metrics horizontally
-    justifyContent: 'space-around', // Distribute space evenly between metrics
-    marginBottom: 60, // Increased marginBottom to push buttons down - IMPORTANT
-    marginTop: 40, // Increased marginTop even more - IMPORTANT
-  },
-  metricContainer: {
-    alignItems: 'center', // Center content within each metric container
-  },
-  metricValue: {
-    fontSize: 40, // Slightly smaller title font for metrics
-    fontWeight: 'bold',
-    lineHeight: 40,
-    textAlign: 'center', // Center align the metric value
-  },
-  metricLabel: {
-    fontSize: 16,
-    textAlign: 'center', // Center align the metric label
-    color: '#687076', // Example label color
-  },
-  timerContainer: { // Removed - no longer directly used
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  timerText: { // Removed - no longer directly used
-    fontSize: 64,
-    fontWeight: 'bold',
-  },
-  unitsPerMinuteText: { // Removed - no longer directly used
-    fontSize: 20,
-    marginTop: 8,
   },
   clickButton: {
     backgroundColor: '#0a7ea4',
@@ -232,39 +159,5 @@ const styles = StyleSheet.create({
     fontSize: 36, // Further increased font size for click button
     fontWeight: 'bold',
     textAlign: 'center', // Center align the text in the click button
-  },
-  controlsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around', // Distribute space evenly between control buttons
-    marginBottom: 20,
-    marginTop: 30, // Added marginTop to separate from click button - IMPORTANT
-  },
-  actionButton: {
-    backgroundColor: '#687076',
-    paddingVertical: 20,
-    paddingHorizontal: 40,
-    borderRadius: 10,
-    flex: 1, // Allow buttons to take equal width
-    marginHorizontal: 5, // Add a little horizontal margin between buttons
-  },
-  actionButtonText: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center', // Center align the text in action buttons
-  },
-  resetButton: {
-    backgroundColor: '#cc3333',
-    paddingVertical: 20,
-    paddingHorizontal: 40,
-    borderRadius: 10,
-    flex: 1, // Allow buttons to take equal width
-    marginHorizontal: 5, // Add a little horizontal margin between buttons
-  },
-  resetButtonText: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center', // Center align the text in reset button
   },
 });
