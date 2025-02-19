@@ -57,7 +57,7 @@ export default function HomeScreen() {
           Play
         </Link>
       </TouchableOpacity>
-    </ThemedView>
+    </ParallaxScrollView>
 
 const styles = StyleSheet.create({
   titleContainer: {
