@@ -26,9 +26,10 @@ export class PlayScreenController {
 
   /**
    * Constructor for PlayScreenController.
-   * Now accepts a WorkSession instance as a dependency.
+   * Now accepts a WorkSession instance as a dependency, which is then
+   * passed down to the WorkTimerService.
    *
-   * @param workSession - The WorkSession instance to use.
+   * @param workSession - Injected WorkSession instance from Presentation Layer.
    */
   constructor(workSession: WorkSession) { // Modified constructor to accept WorkSession
     // Infrastructure Layer dependency
@@ -42,16 +43,17 @@ export class PlayScreenController {
     const resetSessionUseCase = new ResetSessionUseCase(workSession);
 
 
-    // Application Layer - WorkTimerService, now receiving Use Cases and TimerService
+    // Application Layer - WorkTimerService, now receiving Use Cases, TimerService, and WorkSession
     this.workTimerService = new WorkTimerService(
+      workSession, // Pass the injected WorkSession instance to WorkTimerService
       startTimerUseCase,
       pauseTimerUseCase,
       incrementClicksUseCase,
       resetSessionUseCase,
       timerService
     );
-      console.log("PlayScreenController: constructor - WorkTimerService created"); // ADDED LOG
-      console.log("PlayScreenController: constructor - WorkSession instance:", this.workSessionInstance); // ADDED LOG
+    console.log("PlayScreenController: constructor - WorkTimerService created"); // ADDED LOG
+    console.log("PlayScreenController: constructor - WorkSession instance:", this.workSessionInstance); // ADDED LOG
   }
 
   startTimer(): void {

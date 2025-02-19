@@ -14,8 +14,8 @@ import { WorkSession } from '@/domain/entities/WorkSession'; // Import WorkSessi
  * It provides the UI for tracking work units, time, and performance metrics
  * as defined in the Software Requirements Specification (SRS).
  *
- * This component interacts with a stable PlayScreenController instance to handle user
- * actions and update the UI based on the application state.
+ * This component now creates and manages the WorkSession instance,
+ * passing it down to the PlayScreenController.
  */
 export default function PlayScreen() {
   // --- UI State ---
@@ -26,11 +26,13 @@ export default function PlayScreen() {
   // --- Styling ---
   const timerColor = useThemeColor({}, 'tint');
 
+  // --- Domain Entity Instance ---
+  // Create WorkSession instance in PlayScreen and persist it
+  const workSession = new WorkSession(); // WorkSession created here, in PlayScreen
+
   // --- Controller ---
-  // Create WorkSession instance OUTSIDE PlayScreenController
-  const workSession = new WorkSession();
-  // Create PlayScreenController only once using useState initializer function, passing workSession
-  const [controller] = useState(() => new PlayScreenController(workSession)); // Pass workSession
+  // Create PlayScreenController only once using useState initializer function, passing workSession instance
+  const [controller] = useState(() => new PlayScreenController(workSession)); // Pass workSession to controller
 
   // --- Effects ---
   useEffect(() => {
@@ -38,51 +40,48 @@ export default function PlayScreen() {
     setIsRunning(controller.isRunning());
     setClicks(controller.getClicks());
     setElapsedTime(controller.getElapsedTimeMs());
-    console.log("PlayScreen: useEffect (initial state) - isRunning:", isRunning, "clicks:", clicks, "elapsedTime:", elapsedTime); // ADDED LOG
+    console.log("PlayScreen: useEffect (initial state) - isRunning:", isRunning, "clicks:", clicks, "elapsedTime:", elapsedTime);
   }, [controller]); // Dependency on controller (stable instance)
 
   useEffect(() => {
     // Subscribe to time updates from the controller
     const updateTime = (elapsedTimeMs: number) => {
       setElapsedTime(elapsedTimeMs);
-      console.log("PlayScreen: updateTime callback - elapsedTimeMs:", elapsedTimeMs); // ADDED LOG
+      console.log("PlayScreen: updateTime callback - elapsedTimeMs:", elapsedTimeMs);
     };
     controller.onElapsedTimeUpdate(updateTime);
-    console.log("PlayScreen: useEffect (onElapsedTimeUpdate) - callback set"); // ADDED LOG
-
+    console.log("PlayScreen: useEffect (onElapsedTimeUpdate) - callback set");
 
     // Start the timer when the screen loads (FR-PLAY-3)
     controller.startTimer();
     setIsRunning(controller.isRunning());
-    console.log("PlayScreen: useEffect (onElapsedTimeUpdate) - timer started, isRunning:", isRunning); // ADDED LOG
-
+    console.log("PlayScreen: useEffect (onElapsedTimeUpdate) - timer started, isRunning:", isRunning);
 
     // Cleanup on unmount: clear time update callback and pause timer
     return () => {
       controller.clearElapsedTimeUpdateCallback();
       controller.pauseTimer();
       setIsRunning(controller.isRunning());
-      console.log("PlayScreen: useEffect (onElapsedTimeUpdate) - cleanup - callback cleared, timer paused, isRunning:", isRunning); // ADDED LOG
+      console.log("PlayScreen: useEffect (onElapsedTimeUpdate) - cleanup - callback cleared, timer paused, isRunning:", isRunning);
     };
   }, [controller]); // Dependency on controller (stable instance)
 
   useEffect(() => {
     setIsRunning(controller.isRunning());
-    console.log("PlayScreen: useEffect (isRunning update) - isRunning:", isRunning); // ADDED LOG
+    console.log("PlayScreen: useEffect (isRunning update) - isRunning:", isRunning);
   }, [controller.isRunning()]);
-
 
   // --- Event Handlers ---
   const handleIncrementClick = () => {
-    console.log("PlayScreen: handleIncrementClick() called"); // ADDED LOG
+    console.log("PlayScreen: handleIncrementClick() called");
     controller.incrementClicks();
     const updatedClicks = controller.getClicks();
     setClicks(updatedClicks); // Update local clicks state to reflect changes
-    console.log("PlayScreen: handleIncrementClick() - clicks updated to:", updatedClicks); // ADDED LOG
+    console.log("PlayScreen: handleIncrementClick() - clicks updated to:", updatedClicks);
   };
 
   const handleStartPause = () => {
-    console.log("PlayScreen: handleStartPause() called - isRunning before toggle:", isRunning); // ADDED LOG
+    console.log("PlayScreen: handleStartPause() called - isRunning before toggle:", isRunning);
     if (controller.isRunning()) {
       controller.pauseTimer();
     } else {
@@ -90,16 +89,16 @@ export default function PlayScreen() {
     }
     const updatedIsRunning = controller.isRunning();
     setIsRunning(updatedIsRunning); // Update local isRunning state to reflect changes
-    console.log("PlayScreen: handleStartPause() - isRunning after toggle:", updatedIsRunning); // ADDED LOG
+    console.log("PlayScreen: handleStartPause() - isRunning after toggle:", updatedIsRunning);
   };
 
   const handleReset = () => {
-    console.log("PlayScreen: handleReset() called"); // ADDED LOG
+    console.log("PlayScreen: handleReset() called");
     controller.resetSession();
     setIsRunning(controller.isRunning()); // Update local isRunning state
     setElapsedTime(0); // Explicitly set elapsed time to 0 on reset
     setClicks(0); // Explicitly set clicks to 0 on reset
-    console.log("PlayScreen: handleReset() - session reset, isRunning:", isRunning, "elapsedTime:", 0, "clicks:", 0); // ADDED LOG
+    console.log("PlayScreen: handleReset() - session reset, isRunning:", isRunning, "elapsedTime:", 0, "clicks:", 0);
   };
 
   // --- Render ---

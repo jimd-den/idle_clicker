@@ -18,7 +18,7 @@ import { ResetSessionUseCase } from '@/domain/use_cases/ResetSessionUseCase';
 import { TimerService } from '@/application/ports/TimerService';
 
 export class WorkTimerService {
-  private workSession: WorkSession;
+  private workSession: WorkSession; // Now expects WorkSession to be injected
   private startTimerUseCase: StartTimerUseCase;
   private pauseTimerUseCase: PauseTimerUseCase;
   private incrementClicksUseCase: IncrementClicksUseCase;
@@ -28,10 +28,10 @@ export class WorkTimerService {
   /**
    * Constructor for WorkTimerService.
    *
-   * It now receives instances of Use Cases and TimerService as dependencies.
-   * This is a step towards Dependency Injection, making the service
-   * more flexible and testable.
+   * Now expects WorkSession instance to be injected as a dependency,
+   * along with Use Cases and TimerService.
    *
+   * @param workSession - Injected WorkSession instance.
    * @param startTimerUseCase - Use case for starting the timer.
    * @param pauseTimerUseCase - Use case for pausing the timer.
    * @param incrementClicksUseCase - Use case for incrementing clicks.
@@ -39,20 +39,21 @@ export class WorkTimerService {
    * @param timerService - Infrastructure service for timer operations.
    */
   constructor(
+    workSession: WorkSession, // Expect WorkSession instance to be passed in
     startTimerUseCase: StartTimerUseCase,
     pauseTimerUseCase: PauseTimerUseCase,
     incrementClicksUseCase: IncrementClicksUseCase,
     resetSessionUseCase: ResetSessionUseCase,
     timerService: TimerService
   ) {
-    this.workSession = new WorkSession();
+    this.workSession = workSession; // Use the injected WorkSession instance
     this.startTimerUseCase = startTimerUseCase;
     this.pauseTimerUseCase = pauseTimerUseCase;
     this.incrementClicksUseCase = incrementClicksUseCase;
     this.resetSessionUseCase = resetSessionUseCase;
     this.timerService = timerService;
 
-    console.log("WorkTimerService: constructor - WorkSession instance created:", this.workSession); // ADDED LOG
+    console.log("WorkTimerService: constructor - WorkSession instance injected:", this.workSession); // ADDED LOG
 
     this.timerService.onTimeUpdate((elapsedTimeMs) => {
       // Update elapsed time in WorkSession (if needed in future, for now, UI can track)
