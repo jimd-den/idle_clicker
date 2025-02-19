@@ -67,10 +67,11 @@ export default function PlayScreen() {
     };
   }, [controller]); // Dependency on controller (stable instance)
 
-  useEffect(() => {
-    setIsRunning(controller.isRunning());
-    console.log("PlayScreen: useEffect (isRunning update) - isRunning:", isRunning);
-  }, [controller.isRunning()]);
+  // Removed this useEffect as it's no longer needed and potentially problematic
+  // useEffect(() => {
+  //   setIsRunning(controller.isRunning());
+  //   console.log("PlayScreen: useEffect (isRunning update) - isRunning:", isRunning);
+  // }, [controller.isRunning()]);
 
   // --- Event Handlers ---
   const handleIncrementClick = () => {
@@ -83,20 +84,20 @@ export default function PlayScreen() {
 
   const handleStartPause = () => {
     console.log("PlayScreen: handleStartPause() called - isRunning before toggle:", isRunning);
+    let updatedIsRunning: boolean;
     if (controller.isRunning()) {
-      controller.pauseTimer();
+      updatedIsRunning = controller.pauseTimer(); // Get updated isRunning from pauseTimer
     } else {
-      controller.startTimer();
+      updatedIsRunning = controller.startTimer(); // Get updated isRunning from startTimer
     }
-    const updatedIsRunning = controller.isRunning();
     setIsRunning(updatedIsRunning); // Update local isRunning state to reflect changes
     console.log("PlayScreen: handleStartPause() - isRunning after toggle:", updatedIsRunning);
   };
 
   const handleReset = () => {
     console.log("PlayScreen: handleReset() called");
-    controller.resetSession();
-    setIsRunning(controller.isRunning()); // Update local isRunning state
+    const updatedIsRunning = controller.resetSession(); // Get updated isRunning from resetSession
+    setIsRunning(updatedIsRunning); // Update local isRunning state
     setElapsedTime(0); // Explicitly set elapsed time to 0 on reset
     setClicks(0); // Explicitly set clicks to 0 on reset
     console.log("PlayScreen: handleReset() - session reset, isRunning:", isRunning, "elapsedTime:", 0, "clicks:", 0);

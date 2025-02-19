@@ -56,14 +56,16 @@ export class PlayScreenController {
     console.log("PlayScreenController: constructor - WorkSession instance:", this.workSessionInstance);
   }
 
-  startTimer(): void {
+  startTimer(): boolean { // Modified to return boolean
     console.log("PlayScreenController: startTimer() - WorkSession instance:", this.workSessionInstance);
     this.workTimerService.startTimer();
+    return this.workTimerService.isRunning(); // Return isRunning status
   }
 
-  pauseTimer(): void {
+  pauseTimer(): boolean { // Modified to return boolean
     console.log("PlayScreenController: pauseTimer() - WorkSession instance:", this.workSessionInstance);
     this.workTimerService.pauseTimer();
+    return this.workTimerService.isRunning(); // Return isRunning status
   }
 
   incrementClicks(updateClicksUI: (clicks: number) => void): void { // Added callback parameter
@@ -73,9 +75,10 @@ export class PlayScreenController {
     updateClicksUI(updatedClicks); // Invoke callback to update UI
   }
 
-  resetSession(): void {
+  resetSession(): boolean { // Modified to return boolean - although reset always stops timer
     console.log("PlayScreenController: resetSession() - WorkSession instance:", this.workSessionInstance);
     this.workTimerService.resetSession();
+    return this.workTimerService.isRunning(); // Return isRunning status (should be false after reset)
   }
 
   isRunning(): boolean {
