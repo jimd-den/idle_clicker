@@ -107,11 +107,11 @@ export default function PlayScreen() {
     console.log("PlayScreen: handleStartPause() called - isRunning before toggle:", isRunning);
     let updatedIsRunning: boolean;
     if (isRunning) {
-      updatedIsRunning = controller.pauseTimer();
+      updatedIsRunning = controller.pauseTimer(); // Use controller to pause and get isRunning status
     } else {
-      updatedIsRunning = controller.startTimer();
+      updatedIsRunning = controller.startTimer(); // Use controller to start and get isRunning status
     }
-    setIsRunning(updatedIsRunning);
+    setIsRunning(updatedIsRunning); // Update local isRunning state based on controller status
     console.log("PlayScreen: handleStartPause() - isRunning after toggle:", updatedIsRunning);
   };
 
