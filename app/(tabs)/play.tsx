@@ -42,11 +42,24 @@ export default function PlayScreen() {
   // --- Effects ---
   useEffect(() => {
     // Initialize state from controller on component mount
-    setIsRunning(controller.isRunning());
-    setClicks(controller.getClicks());
-    setElapsedTime(controller.getElapsedTimeMs());
-    console.log("PlayScreen: useEffect (initial state) - isRunning:", isRunning, "clicks:", clicks, "elapsedTime:", elapsedTime);
+    const initialIsRunning = controller.isRunning();
+    const initialClicks = controller.getClicks();
+    const initialElapsedTime = controller.getElapsedTimeMs();
+
+    setIsRunning(initialIsRunning);
+    setClicks(initialClicks);
+    setElapsedTime(initialElapsedTime);
+    setDisplayTime(formatTime(initialElapsedTime)); // Format initial elapsed time
+    if (initialElapsedTime > 0) {
+        setUpm(initialClicks / (initialElapsedTime / 60000)); // Calculate initial UPM
+    } else {
+        setUpm(0);
+    }
+
+
+    console.log("PlayScreen: useEffect (initial state) - isRunning:", initialIsRunning, "clicks:", initialClicks, "elapsedTime:", initialElapsedTime, "upm:", upm);
   }, [controller]); // Dependency on controller (stable instance)
+
 
   useEffect(() => {
     // Subscribe to time updates from the controller (millisecond updates)
@@ -58,15 +71,15 @@ export default function PlayScreen() {
       } else {
         setUpm(0);
       }
-      console.log("PlayScreen: updateTime callback - elapsedTimeMs:", elapsedTimeMs);
+      console.log("PlayScreen: updateTime callback - elapsedTimeMs:", elapsedTimeMs, "upm:", upm);
     };
     controller.onElapsedTimeUpdate(updateTime);
     console.log("PlayScreen: useEffect (onElapsedTimeUpdate) - callback set");
 
-    // Start the timer when the screen loads (FR-PLAY-3)
-    controller.startTimer();
-    setIsRunning(controller.isRunning());
-    console.log("PlayScreen: useEffect (onElapsedTimeUpdate) - timer started, isRunning:", isRunning);
+    // Start the timer when the screen loads (FR-PLAY-3) - REMOVE THIS, start should be user initiated
+    // controller.startTimer();
+    // setIsRunning(controller.isRunning());
+    // console.log("PlayScreen: useEffect (onElapsedTimeUpdate) - timer started, isRunning:", isRunning);
 
     // Cleanup on unmount: clear time update callback and pause timer
     return () => {
@@ -98,21 +111,26 @@ export default function PlayScreen() {
       } else {
         setUpm(0);
       }
-      console.log("PlayScreen: handleIncrementClick() - clicks updated to:", updatedClicks);
+      console.log("PlayScreen: handleIncrementClick() - clicks updated to:", updatedClicks, "upm:", upm);
     });
   };
 
   const handleStartPause = () => {
     console.log("PlayScreen: handleStartPause() called - isRunning before toggle:", isRunning);
-    let updatedIsRunning: boolean;
-    if (controller.isRunning()) {
-      updatedIsRunning = controller.pauseTimer(); // Get updatedIsRunning from pauseTimer
+    const nextIsRunning = !isRunning; // Toggle isRunning state locally first
+    setIsRunning(nextIsRunning); // Update local isRunning state immediately for UI feedback
+
+    if (nextIsRunning) {
+      controller.startTimer();
+      console.log("PlayScreen: handleStartPause() - Start Timer called");
     } else {
-      updatedIsRunning = controller.startTimer(); // Get updatedIsRunning from startTimer
+      controller.pauseTimer();
+      console.log("PlayScreen: handleStartPause() - Pause Timer called");
     }
-    setIsRunning(updatedIsRunning); // Update local isRunning state to reflect changes
-    console.log("PlayScreen: handleStartPause() - isRunning after toggle:", updatedIsRunning);
+    // No need to get isRunning from controller again, local state is already updated
+    console.log("PlayScreen: handleStartPause() - isRunning after toggle:", nextIsRunning);
   };
+
 
   const handleReset = () => {
     console.log("PlayScreen: handleReset() called");
