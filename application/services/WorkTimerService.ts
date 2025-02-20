@@ -17,6 +17,12 @@ import { IncrementClicksUseCase } from '@/domain/use_cases/IncrementClicksUseCas
 import { ResetSessionUseCase } from '@/domain/use_cases/ResetSessionUseCase';
 import { TimerService } from '@/application/ports/TimerService';
 
+interface MetricsUpdate { // Define interface for metrics update
+  elapsedTimeMs: number;
+  upm: number;
+}
+
+
 export class WorkTimerService {
   private workSession: WorkSession; // Now expects WorkSession to be injected
   private startTimerUseCase: StartTimerUseCase;
@@ -24,6 +30,7 @@ export class WorkTimerService {
   private incrementClicksUseCase: IncrementClicksUseCase;
   private resetSessionUseCase: ResetSessionUseCase;
   private timerService: TimerService;
+  private metricsUpdateCallback: ((metrics: MetricsUpdate) => void) | null = null; // Changed callback type
 
   /**
    * Constructor for WorkTimerService.
@@ -56,23 +63,24 @@ export class WorkTimerService {
     console.log("WorkTimerService: constructor - WorkTimerService instance injected:", this.workSession); // ADDED LOG
 
     this.timerService.onTimeUpdate((elapsedTimeMs) => {
-      // Update elapsed time in WorkSession (if needed in future, for now, UI can track)
-      // this.workSession.setElapsedTimeMs(elapsedTimeMs);
-      // For now, we just notify listeners in the presentation layer if needed.
-      if (this.timeUpdateCallback) {
-        this.timeUpdateCallback(elapsedTimeMs);
+      // Calculate UPM here in the Application Layer
+      const upm = this.calculateUPM(elapsedTimeMs, this.workSession.getClicks());
+      const metrics = { elapsedTimeMs, upm }; // Create metrics object
+      console.log("WorkTimerService: onTimeUpdate callback - elapsedTimeMs:", elapsedTimeMs, "UPM:", upm); // ADDED LOG
+      // Notify listeners in the presentation layer with both elapsedTimeMs and UPM
+      if (this.metricsUpdateCallback) {
+        this.metricsUpdateCallback(metrics); // Send combined metrics update
       }
     });
   }
 
-  private timeUpdateCallback: ((elapsedTimeMs: number) => void) | null = null;
 
-  onElapsedTimeUpdate(callback: (elapsedTimeMs: number) => void) {
-    this.timeUpdateCallback = callback;
+  onMetricsUpdate(callback: (metrics: MetricsUpdate) => void) { // Changed callback type
+    this.metricsUpdateCallback = callback;
   }
 
-  clearElapsedTimeUpdateCallback() {
-    this.timeUpdateCallback = null;
+  clearMetricsUpdateCallback() { // Changed clear callback method name
+    this.metricsUpdateCallback = null;
   }
 
   startTimer(): boolean {
@@ -92,12 +100,13 @@ export class WorkTimerService {
   incrementClicks(): void {
     console.log("WorkTimerService: incrementClicks() - WorkSession instance:", this.workSession); // ADDED LOG
     this.incrementClicksUseCase.execute();
+    // UPM is now updated in the onTimeUpdate callback, no need to update it here
   }
 
   resetSession(): boolean {
     console.log("WorkTimerService: resetSession() - WorkSession instance:", this.workSession); // ADDED LOG
     this.resetSessionUseCase.execute(true); // Pass autoStart=true
-    // this.timerService.clearTimeUpdateCallback(); // <-- REMOVE THIS LINE
+    // this.timerService.clearTimeUpdateCallback(); // <-- REMOVE THIS LINE - keep callback for updates
     this.timerService.start(); // Start the timer service since we auto-started WorkSession
     return this.isRunning();
   }
@@ -117,13 +126,21 @@ export class WorkTimerService {
     return this.workSession.getClicks();
   }
 
-  onElapsedTimeUpdate(callback: (elapsedTimeMs: number) => void) {
-    console.log("WorkTimerService: onElapsedTimeUpdate() setting callback");
-    this.timerService.onTimeUpdate(callback);
+
+  private calculateUPM(elapsedTimeMs: number, clicks: number): number { // UPM calculation method
+    let currentUPM = 0;
+    if (elapsedTimeMs > 0) {
+      currentUPM = clicks / (elapsedTimeMs / 60000);
+    }
+    return currentUPM;
   }
 
-  clearElapsedTimeUpdateCallback() {
-    console.log("WorkTimerService: clearElapsedTimeUpdateCallback() called");
-    this.timerService.clearTimeUpdateCallback();
-  }
+  // No longer need separate onElapsedTimeUpdate and onUPMUpdate, using combined onMetricsUpdate
+  // onElapsedTimeUpdate(callback: (elapsedTimeMs: number) => void) {
+  //   this.timeUpdateCallback = callback;
+  // }
+
+  // clearElapsedTimeUpdateCallback() {
+  //   this.timeUpdateCallback = null;
+  // }
 }
