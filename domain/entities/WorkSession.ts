@@ -3,8 +3,9 @@ export class WorkSession {
   private endTime: Date | null;
   private elapsedTimeMs: number; // Elapsed time in milliseconds
   private clicks: number;
+  // private timerService: TimerService; // REMOVE TimerService dependency - WorkSession should not depend on Infrastructure
 
-  constructor() {
+  constructor() { // Removed TimerService from constructor
     this.startTime = null;
     this.endTime = null;
     this.elapsedTimeMs = 0;
@@ -18,6 +19,7 @@ export class WorkSession {
     this.startTime = new Date();
     this.endTime = null; // Clear endTime to indicate timer is running
     console.log("WorkSession: start() - timer started/restarted - startTime:", this.startTime, "endTime:", this.endTime); // ADDED LOG
+    // this.timerService.start(); // REMOVE TimerService interaction - WorkSession should not depend on Infrastructure
   }
 
   pause(): void {
@@ -27,6 +29,7 @@ export class WorkSession {
       console.log("WorkSession: pause() - timer paused - endTime:", this.endTime); // ADDED LOG
     }
     console.log("WorkSession: pause() - after pause - startTime:", this.startTime, "endTime:", this.endTime); // ADDED LOG
+    // this.timerService.pause(); // REMOVE TimerService interaction - WorkSession should not depend on Infrastructure
   }
 
   reset(autoStart: boolean = false): void {
@@ -36,10 +39,10 @@ export class WorkSession {
     this.elapsedTimeMs = 0;
     this.clicks = 0;
     console.log("WorkSession: reset() - session reset - startTime:", this.startTime, "endTime:", this.endTime, "elapsedTimeMs:", this.elapsedTimeMs, "clicks:", this.clicks); // ADDED LOG
-    
+
     if (autoStart) {
       console.log("WorkSession: reset() - auto-starting timer");
-      this.start();
+      this.start(); // Just start WorkSession timer logic, TimerService start is handled elsewhere
     }
   }
 

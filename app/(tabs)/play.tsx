@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, TextInput, FlatList } from 'react-native'; // Import TextInput, FlatList
 
 import { ThemedText } from '@/components/ThemedText';
@@ -10,6 +10,7 @@ import { MetricsDisplay } from '@/components/MetricsDisplay';
 import { TimerControls } from '@/components/TimerControls';
 import { useWorkSession } from '@/contexts/WorkSessionContext';
 import { useWorkTimerService } from '@/contexts/WorkSessionContext'; // Import useWorkTimerService
+import { MetricsUpdate } from '@/application/services/WorkTimerService'; // Import MetricsUpdate interface
 
 
 /**
@@ -19,11 +20,17 @@ import { useWorkTimerService } from '@/contexts/WorkSessionContext'; // Import u
  */
 export default function PlayScreen() {
   // --- UI State ---
-  const [elapsedTime, setElapsedTime] = useState(0); // Milliseconds elapsed - updates frequently
-  // const [displayTime, setDisplayTime] = useState("00:00"); // REMOVE displayTime state from PlayScreen
-  const [clicks, setClicks] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
-  const [upm, setUpm] = useState(0);
+  // REMOVE individual state variables - using metrics state now
+  // const [elapsedTime, setElapsedTime] = useState(0);
+  // const [clicks, setClicks] = useState(0);
+  // const [isRunning, setIsRunning] = useState(false);
+  // const [upm, setUpm] = useState(0);
+  const [metrics, setMetrics] = useState<MetricsUpdate>({ // ADD metrics state
+    elapsedTimeMs: 0,
+    upm: 0,
+    isRunning: false,
+    clicks: 0
+  });
   const [noteText, setNoteText] = useState(''); // State for note input
   const [notes, setNotes] = useState<Array<{ timestamp: string, text: string }>>([]); // State for notes array
 
@@ -36,149 +43,141 @@ export default function PlayScreen() {
   const workTimerService = useWorkTimerService(); // Get WorkTimerService from context
 
   // --- Controller ---
-  // Changed from useState to useRef
-  const controllerRef = useRef<PlayScreenController | null>(null);
+  // Changed to useCallback to ensure controller is recreated when dependencies change (workSession, workTimerService)
+  const controller = useCallback(() => {
+    return new PlayScreenController(workSession, workTimerService);
+  }, [workSession, workTimerService]);
 
-  if (!controllerRef.current) {
-    controllerRef.current = new PlayScreenController(workSession, workTimerService);
-  }
-  const controller = controllerRef.current;
+  // useRef to hold the controller instance, now updated on each render if controller factory changes
+  const controllerRef = useRef<PlayScreenController | null>(null);
 
 
   // --- Effects ---
   useEffect(() => {
-    // Initialize state from controller on component mount
-    if (controller) { // Check if controller is defined
-      const initialIsRunning = controller.isRunning();
-      const initialClicks = controller.getClicks();
-      const initialElapsedTime = controller.getElapsedTimeMs();
+    // Re-create controller instance on each render if the factory function changes
+    controllerRef.current = controller();
+  }, [controller]);
 
-      setIsRunning(initialIsRunning);
-      setClicks(initialClicks);
-      setElapsedTime(initialElapsedTime);
-      // setDisplayTime(formatTime(initialElapsedTime)); // REMOVE displayTime initialization from PlayScreen
 
-      console.log("PlayScreen: useEffect (initial state) - isRunning:", initialIsRunning, "clicks:", initialClicks, "elapsedTime:", initialElapsedTime, "upm:", upm);
+  useEffect(() => {
+    // Initialize state from controller on component mount and when controller instance changes
+    if (controllerRef.current) { // Check if controller is defined
+      const currentController = controllerRef.current;
+      const initialIsRunning = currentController.isRunning();
+      const initialClicks = currentController.getClicks();
+      const initialElapsedTime = currentController.getElapsedTimeMs();
+      const initialUpm = 0; // UPM is calculated, initialize to 0
+
+      setMetrics({ // Initialize metrics state
+        isRunning: initialIsRunning,
+        clicks: initialClicks,
+        elapsedTimeMs: initialElapsedTime,
+        upm: initialUpm
+      });
+
+      console.log("PlayScreen: useEffect (initial state) - metrics:", metrics);
     } else {
       console.log("PlayScreen: useEffect (initial state) - controller is undefined!");
     }
-  }, [controller]);
+  }, [controllerRef, controller]); // Depend on controller and controllerRef
+
 
   useEffect(() => {
-    // Subscribe to time updates from controller
-    if (controller) { // Check if controller is defined
-      const updateTime = (elapsedTimeMs: number) => {
-        setElapsedTime(Math.floor(elapsedTimeMs)); // Apply Math.floor here as well
-        console.log("PlayScreen: updateTime callback - elapsedTimeMs:", elapsedTimeMs);
+    // Subscribe to metrics updates from controller
+    if (controllerRef.current) { // Check if controller is defined
+      const currentController = controllerRef.current;
+      const updateMetrics = (updatedMetrics: MetricsUpdate) => { // Update callback to handle MetricsUpdate
+        setMetrics(updatedMetrics); // Update metrics state directly
+        console.log("PlayScreen: updateMetrics callback - metrics:", updatedMetrics);
       };
-      controller.onElapsedTimeUpdate(updateTime);
-      console.log("PlayScreen: useEffect (onElapsedTimeUpdate) - callback set");
-
-      // Subscribe to UPM updates from controller
-      const updateUPM = (currentUPM: number) => {
-        setUpm(currentUPM);
-        console.log("PlayScreen: updateUPM callback - upm:", currentUPM);
-      };
-      controller.onUPMUpdate(updateUPM);
-      console.log("PlayScreen: useEffect (onUPMUpdate) - UPM callback set");
+      currentController.onMetricsUpdate(updateMetrics); // Subscribe to combined metrics update
+      console.log("PlayScreen: useEffect (onMetricsUpdate) - callback set");
 
 
       // Cleanup on unmount
       return () => {
-        if (controller) { // Check if controller is defined before cleanup
-          controller.clearElapsedTimeUpdateCallback();
-          controller.clearUPMUpdateCallback();
-          controller.pauseTimer();
-          setIsRunning(controller.isRunning());
-          console.log("PlayScreen: useEffect (onElapsedTimeUpdate) - cleanup - callbacks cleared, timer paused, isRunning:", isRunning);
+        if (controllerRef.current) { // Check if controller is defined before cleanup
+          const currentController = controllerRef.current;
+          currentController.clearMetricsUpdateCallback();
+          currentController.pauseTimer(); // Pause timer on unmount as well for consistency
+          setMetrics(prevMetrics => ({ ...prevMetrics, isRunning: currentController.isRunning() })); // Update isRunning state on unmount
+          console.log("PlayScreen: useEffect (onMetricsUpdate) - cleanup - callbacks cleared, timer paused, isRunning updated");
         } else {
-          console.log("PlayScreen: useEffect (onElapsedTimeUpdate) - cleanup - controller is undefined, no cleanup needed.");
+          console.log("PlayScreen: useEffect (onMetricsUpdate) - cleanup - controller is undefined, no cleanup needed.");
         }
       };
     } else {
-      console.log("PlayScreen: useEffect (onElapsedTimeUpdate) - controller is undefined, skipping effect.");
+      console.log("PlayScreen: useEffect (onMetricsUpdate) - controller is undefined, skipping effect.");
     }
-  }, [controller]);
-
-  // REMOVE useEffect for displayTime from PlayScreen
-  // useEffect(() => {
-  //   // Update displayTime every second
-  //   const intervalId = setInterval(() => {
-  //     setDisplayTime(formatTime(elapsedTime));
-  //     console.log("PlayScreen: displayTime interval - updating displayTime - Elapsed Time:", elapsedTime); // ADDED LOG - ELAPSED TIME
-  //   }, 1000); // Update every 1 second - ENSURING 1000ms INTERVAL
-
-  //   return () => {
-  //     clearInterval(intervalId);
-  //     console.log("PlayScreen: displayTime interval - cleared"); // ADDED LOG
-  //   };
-  // }, [elapsedTime]);
+  }, [controllerRef]); // Depend on controllerRef
 
 
   // --- Event Handlers ---
-  const handleIncrementClick = () => {
+  const handleIncrementClick = useCallback(() => { // ADD useCallback
     console.log("PlayScreen: handleIncrementClick() called - START"); // ADDED LOG - START
-    if (controller) {
-      controller.incrementClicks((updatedClicks) => {
-        setClicks(updatedClicks);
+    if (controllerRef.current) {
+      const currentController = controllerRef.current;
+      currentController.incrementClicks((updatedClicks) => {
+        setMetrics(prevMetrics => ({ ...prevMetrics, clicks: updatedClicks })); // Update clicks in metrics state
         console.log("PlayScreen: handleIncrementClick() - clicks updated to:", updatedClicks);
       });
     } else {
       console.log("PlayScreen: handleIncrementClick() - controller is undefined, click increment ignored.");
     }
     console.log("PlayScreen: handleIncrementClick() called - END"); // ADDED LOG - END
-  };
+  }, [controllerRef]); // ADD controllerRef as dependency
 
-  const handleStartPause = () => {
-    console.log("PlayScreen: handleStartPause() called - isRunning before toggle:", isRunning); // LOG 1: Before function logic
+  const handleStartPause = useCallback(() => { // ADD useCallback
+    console.log("PlayScreen: handleStartPause() called - isRunning before toggle:", metrics.isRunning); // LOG 1: Before function logic
     let updatedIsRunning: boolean;
-    if (isRunning) {
+    if (metrics.isRunning) {
       console.log("PlayScreen: handleStartPause() - isRunning is true, pausing timer"); // LOG 2: isRunning is true (Pause case)
-      updatedIsRunning = controller?.pauseTimer() ?? false; // Use optional chaining and nullish fallback
+      updatedIsRunning = controllerRef.current?.pauseTimer() ?? false; // Use optional chaining and nullish fallback
     } else {
       console.log("PlayScreen: handleStartPause() - isRunning is false, starting timer"); // LOG 3: isRunning is false (Start case)
-      updatedIsRunning = controller?.startTimer() ?? false; // Use optional chaining and nullish fallback
+      updatedIsRunning = controllerRef.current?.startTimer() ?? false; // Use optional chaining and nullish fallback
     }
     console.log("PlayScreen: handleStartPause() - controller method returned:", updatedIsRunning); // LOG 4: Value returned from controller
-    setIsRunning(updatedIsRunning); // Update local isRunning state based on controller status - NOW USING RETURNED VALUE
-    console.log("PlayScreen: handleStartPause() - isRunning after setIsRunning:", isRunning); // LOG 5: isRunning after state update
-  };
+    setMetrics(prevMetrics => ({ ...prevMetrics, isRunning: updatedIsRunning })); // Update isRunning in metrics state
+    console.log("PlayScreen: handleStartPause() - isRunning after setIsRunning:", metrics.isRunning); // LOG 5: isRunning after state update
+  }, [metrics.isRunning, controllerRef]); // ADD isRunning and controllerRef as dependencies
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => { // ADD useCallback
     console.log("PlayScreen: handleReset() called");
-    const updatedIsRunning = controller?.resetSession() ?? false; // Use optional chaining and nullish fallback
-    setIsRunning(updatedIsRunning);
-    setElapsedTime(0);
-    // setDisplayTime("00:00"); // REMOVE displayTime reset from PlayScreen
-    setClicks(0);
-    setUpm(0);
+    const resetMetrics = controllerRef.current?.resetSession(); // Get reset metrics from controller
+    if (resetMetrics) {
+      setMetrics(resetMetrics); // Update metrics state with reset values
+      console.log("PlayScreen: handleReset() - metrics state updated with reset values:", resetMetrics);
+    } else {
+      console.log("PlayScreen: handleReset() - resetMetrics is undefined, reset failed in controller?");
+    }
     setNotes([]); // Clear notes on reset
-    console.log("PlayScreen: handleReset() - session reset, isRunning:", isRunning, "elapsedTime:", 0, "clicks:", 0, "upm:", 0, "notes cleared");
-  };
+    console.log("PlayScreen: handleReset() - notes cleared");
+  }, [controllerRef]); // ADD controllerRef as dependency
 
-  const handleAddNote = () => {
+  const handleAddNote = useCallback(() => { // ADD useCallback
     if (noteText.trim() !== '') {
-      const timestamp = formatTime(elapsedTime);
+      const timestamp = formatTime(metrics.elapsedTimeMs); // Use elapsedTime from metrics state
       const newNote = { timestamp, text: noteText };
       setNotes([...notes, newNote]);
       setNoteText(''); // Clear input after adding note
       console.log("PlayScreen: handleAddNote() - note added:", newNote);
     }
-  };
+  }, [noteText, metrics.elapsedTimeMs, setNotes]); // ADD dependencies
 
 
   // --- Render ---
   return (
     <View style={styles.container}>
       {/* Top Module: Performance Metrics Display */}
-      <MetricsDisplay clicks={clicks} elapsedTimeMs={elapsedTime} upm={upm} /> {/* Pass elapsedTimeMs */}
+      <MetricsDisplay clicks={metrics.clicks} elapsedTimeMs={metrics.elapsedTimeMs} upm={metrics.upm} /> {/* Pass metrics from state */}
 
       {/* Middle Module: Work Unit Input */}
       <TouchableOpacity
-        style={[styles.clickButton, !isRunning ? styles.clickButtonDisabled : {}]} // Apply disabled style
+        style={[styles.clickButton, !metrics.isRunning ? styles.clickButtonDisabled : {}]} // Use isRunning from metrics state
         onPress={handleIncrementClick}
         accessibilityLabel="Click to increment work units"
-        disabled={!isRunning} // Disable button when not running
+        disabled={!metrics.isRunning} // Disable button when not running - use isRunning from metrics state
       >
         {/* Re-wrap "Click!" in ThemedText just to be sure */}
         <ThemedText style={styles.clickButtonText}>Click!</ThemedText>
@@ -187,9 +186,9 @@ export default function PlayScreen() {
       {/* Bottom Module: Timer Control and Notes */}
       <View style={styles.bottomModuleContainer}>
         <TimerControls
-          isRunning={isRunning}
+          isRunning={metrics.isRunning} // Use isRunning from metrics state
           onStartPause={handleStartPause}
-          onReset={handleReset}
+          onReset={handleReset} // Pass handleReset - which now updates metrics state
         />
 
         {/* Note Input */}
@@ -199,13 +198,13 @@ export default function PlayScreen() {
             placeholder="Enter note"
             value={noteText}
             onChangeText={setNoteText}
-            editable={!isRunning} // Disable input when timer is running
+            editable={!metrics.isRunning} // Disable input when timer is running - use isRunning from metrics state
             multiline // Allow multiline notes
           />
           <TouchableOpacity
-            style={[styles.addButton, isRunning ? styles.addButtonDisabled : {}]} // Disable when running
+            style={[styles.addButton, metrics.isRunning ? styles.addButtonDisabled : {}]} // Disable when running - use isRunning from metrics state
             onPress={handleAddNote}
-            disabled={isRunning} // Disable button when timer is running
+            disabled={metrics.isRunning} // Disable button when timer is running - use isRunning from metrics state
             accessibilityLabel="Add Note"
           >
             <Text style={styles.addButtonText}>Add Note</Text>

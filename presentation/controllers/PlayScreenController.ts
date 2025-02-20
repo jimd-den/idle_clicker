@@ -24,8 +24,11 @@ import { WorkSession } from '@/domain/entities/WorkSession';
 export class PlayScreenController {
   private workTimerService: WorkTimerService; // Now depends on WorkTimerService, injected
   private workSessionInstance: WorkSession; // Keep track of WorkSession instance
-  private elapsedTimeUpdateCallback: ((elapsedTimeMs: number) => void) | null = null;
-  private upmUpdateCallback: ((upm: number) => void) | null = null; // Callback for UPM updates
+  private metricsUpdateCallback: ((metrics: MetricsUpdate) => void) | null = null; // Changed to MetricsUpdate callback
+  private elapsedTimeUpdateCallback: ((elapsedTimeMs: number) => void) | null = null; // REMOVE separate elapsedTime callback
+  private upmUpdateCallback: ((upm: number) => void) | null = null; // REMOVE separate UPM callback
+  private isRunningUpdateCallback: ((isRunning: boolean) => void) | null = null; // ADD isRunning callback
+  private clicksUpdateCallback: ((clicks: number) => void) | null = null;     // ADD clicks callback
 
 
   /**
@@ -43,14 +46,24 @@ export class PlayScreenController {
     console.log("PlayScreenController: constructor - WorkSession instance:", this.workSessionInstance);
 
     // Set up metrics update callback from WorkTimerService
-    this.workTimerService.onMetricsUpdate(({ elapsedTimeMs, upm }) => { // Listen for combined metrics update
-      console.log("PlayScreenController: onMetricsUpdate - metrics callback triggered:", elapsedTimeMs, upm); // ADDED LOG
-      if (this.elapsedTimeUpdateCallback) {
-        this.elapsedTimeUpdateCallback(Math.floor(elapsedTimeMs)); // Forward elapsed time update to UI, removing decimal places
+    this.workTimerService.onMetricsUpdate((metrics) => { // Listen for combined metrics update
+      console.log("PlayScreenController: onMetricsUpdate - metrics callback triggered:", metrics); // ADDED LOG
+      if (this.metricsUpdateCallback) {
+        this.metricsUpdateCallback(metrics); // Forward all metrics update to UI
       }
-      if (this.upmUpdateCallback) {
-        this.upmUpdateCallback(upm); // Forward UPM update to UI
-      }
+      // REMOVE separate callbacks - using combined metrics callback now
+      // if (this.elapsedTimeUpdateCallback) {
+      //   this.elapsedTimeUpdateCallback(Math.floor(elapsedTimeMs)); // Forward elapsed time update to UI, removing decimal places
+      // }
+      // if (this.upmUpdateCallback) {
+      //   this.upmUpdateCallback(upm); // Forward UPM update to UI
+      // }
+      // if (this.isRunningUpdateCallback) {
+      //   this.isRunningUpdateCallback(isRunning); // Forward isRunning update to UI
+      // }
+      // if (this.clicksUpdateCallback) {
+      //   this.clicksUpdateCallback(clicks); // Forward clicks update to UI
+      // }
     });
   }
 
@@ -64,16 +77,16 @@ export class PlayScreenController {
     return this.workTimerService.pauseTimer(); // Now just call service method
   }
 
-  incrementClicks(updateClicksUI: (clicks: number) => void): void { // Added callback parameter
+  incrementClicks(updateClicksUI: (clicks: number) => void): void { // Added callback parameter - but not really needed anymore
     console.log("PlayScreenController: incrementClicks() - WorkSession instance:", this.workSessionInstance);
     this.workTimerService.incrementClicks(); // Now just call service method
-    const updatedClicks = this.workTimerService.getClicks();
-    updateClicksUI(updatedClicks); // Invoke callback to update UI
+    const updatedClicks = this.workTimerService.getClicks(); // Get clicks directly from service
+    updateClicksUI(updatedClicks); // Invoke callback to update UI - still useful for immediate click update
   }
 
-  resetSession(): boolean { // Modified to return boolean - although reset always stops timer
+  resetSession(): MetricsUpdate { // Modified to return MetricsUpdate
     console.log("PlayScreenController: resetSession() - WorkSession instance:", this.workSessionInstance);
-    return this.workTimerService.resetSession(); // Now just call service method
+    return this.workTimerService.resetSession(); // Now just call service method and return state
   }
 
   isRunning(): boolean {
@@ -91,23 +104,55 @@ export class PlayScreenController {
     return this.workTimerService.getClicks();
   }
 
-  onElapsedTimeUpdate(callback: (elapsedTimeMs: number) => void) {
-    console.log("PlayScreenController: onElapsedTimeUpdate() setting callback");
-    this.elapsedTimeUpdateCallback = callback;
+  // Modified to accept MetricsUpdate callback
+  onMetricsUpdate(callback: (metrics: MetricsUpdate) => void) {
+    console.log("PlayScreenController: onMetricsUpdate() setting callback");
+    this.metricsUpdateCallback = callback;
   }
 
-  clearElapsedTimeUpdateCallback() {
-    console.log("PlayScreenController: clearElapsedTimeUpdateCallback() called");
-    this.elapsedTimeUpdateCallback = null;
+  clearMetricsUpdateCallback() {
+    console.log("PlayScreenController: clearMetricsUpdateCallback() called");
+    this.metricsUpdateCallback = null;
   }
 
-  onUPMUpdate(callback: (upm: number) => void) {
-    console.log("PlayScreenController: onUPMUpdate() setting callback");
-    this.upmUpdateCallback = callback;
-  }
+  // REMOVE separate callbacks - using combined metrics callback now
+  // onElapsedTimeUpdate(callback: (elapsedTimeMs: number) => void) {
+  //   console.log("PlayScreenController: onElapsedTimeUpdate() setting callback");
+  //   this.elapsedTimeUpdateCallback = callback;
+  // }
 
-  clearUPMUpdateCallback() {
-    console.log("PlayScreenController: clearUPMUpdateCallback() called");
-    this.upmUpdateCallback = null;
-  }
+  // clearElapsedTimeUpdateCallback() {
+  //   console.log("PlayScreenController: clearElapsedTimeUpdateCallback() called");
+  //   this.elapsedTimeUpdateCallback = null;
+  // }
+
+  // onUPMUpdate(callback: (upm: number) => void) {
+  //   console.log("PlayScreenController: onUPMUpdate() setting callback");
+  //   this.upmUpdateCallback = callback;
+  // }
+
+  // clearUPMUpdateCallback() {
+  //   console.log("PlayScreenController: clearUPMUpdateCallback() called");
+  //   this.upmUpdateCallback = null;
+  // }
+
+  // onIsRunningUpdate(callback: (isRunning: boolean) => void) {
+  //   console.log("PlayScreenController: onIsRunningUpdate() setting callback");
+  //   this.isRunningUpdateCallback = callback;
+  // }
+
+  // clearIsRunningUpdateCallback() {
+  //   console.log("PlayScreenController: clearIsRunningUpdateCallback() called");
+  //   this.isRunningUpdateCallback = null;
+  // }
+
+  // onClicksUpdate(callback: (clicks: number) => void) {
+  //   console.log("PlayScreenController: onClicksUpdate() setting callback");
+  //   this.clicksUpdateCallback = callback;
+  // }
+
+  // clearClicksUpdateCallback() {
+  //   console.log("PlayScreenController: clearClicksUpdateCallback() called");
+  //   this.clicksUpdateCallback = null;
+  // }
 }

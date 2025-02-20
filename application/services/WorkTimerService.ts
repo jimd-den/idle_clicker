@@ -20,6 +20,8 @@ import { TimerService } from '@/application/ports/TimerService';
 interface MetricsUpdate { // Define interface for metrics update
   elapsedTimeMs: number;
   upm: number;
+  isRunning: boolean; // ADD isRunning to metrics
+  clicks: number;     // ADD clicks to metrics
 }
 
 
@@ -65,9 +67,11 @@ export class WorkTimerService {
     this.timerService.onTimeUpdate((elapsedTimeMs) => {
       // Calculate UPM here in the Application Layer
       const upm = this.calculateUPM(elapsedTimeMs, this.workSession.getClicks());
-      const metrics = { elapsedTimeMs, upm }; // Create metrics object
-      console.log("WorkTimerService: onTimeUpdate callback - elapsedTimeMs:", elapsedTimeMs, "UPM:", upm); // ADDED LOG
-      // Notify listeners in the presentation layer with both elapsedTimeMs and UPM
+      const isRunning = this.workSession.isRunning(); // Get isRunning from WorkSession
+      const clicks = this.workSession.getClicks();     // Get clicks from WorkSession
+      const metrics: MetricsUpdate = { elapsedTimeMs, upm, isRunning, clicks }; // Create metrics object with isRunning and clicks
+      console.log("WorkTimerService: onTimeUpdate callback - metrics:", metrics); // ADDED LOG
+      // Notify listeners in the presentation layer with combined metrics update
       if (this.metricsUpdateCallback) {
         this.metricsUpdateCallback(metrics); // Send combined metrics update
       }
@@ -103,12 +107,16 @@ export class WorkTimerService {
     // UPM is now updated in the onTimeUpdate callback, no need to update it here
   }
 
-  resetSession(): boolean {
+  resetSession(): MetricsUpdate { // Modified to return MetricsUpdate
     console.log("WorkTimerService: resetSession() - WorkSession instance:", this.workSession); // ADDED LOG
-    this.resetSessionUseCase.execute(true); // Pass autoStart=true
-    // this.timerService.clearTimeUpdateCallback(); // <-- REMOVE THIS LINE - keep callback for updates
-    this.timerService.start(); // Start the timer service since we auto-started WorkSession
-    return this.isRunning();
+    this.resetSessionUseCase.execute(true); // Execute ResetSessionUseCase, pass autoStart=true
+    // No need to call timerService.reset() or timerService.start() here, it's handled in the use case or WorkSession
+    return { // Return reset state
+      isRunning: false,
+      elapsedTimeMs: 0,
+      upm: 0,
+      clicks: 0
+    };
   }
 
   isRunning(): boolean {

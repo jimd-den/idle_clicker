@@ -1,30 +1,25 @@
 import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { ThemedText } from '../components/ThemedText';
+import { IconSymbol } from './ui/IconSymbol';
+import { MetricsUpdate } from '@/application/services/WorkTimerService'; // Import MetricsUpdate
 
 interface TimerControlsProps {
   isRunning: boolean;
   onStartPause: () => void;
-  onReset: () => void;
+  onReset: () => MetricsUpdate; // Modified onReset to return MetricsUpdate
 }
 
 export function TimerControls({ isRunning, onStartPause, onReset }: TimerControlsProps) {
   return (
     <View style={styles.controlsContainer}>
-      <TouchableOpacity
-        style={styles.actionButton}
-        onPress={onStartPause}
-        accessibilityLabel={isRunning ? 'Pause Timer' : 'Start Timer'}
-      >
-        <Text style={styles.actionButtonText}>
-          {isRunning ? 'Pause' : 'Start'}
-        </Text>
+      <TouchableOpacity style={styles.controlButton} onPress={onReset} accessibilityLabel="Reset Timer">
+        <IconSymbol name="reset" size={24} color="#fff" />
+        <ThemedText style={styles.controlButtonText}>Reset</ThemedText>
       </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.resetButton}
-        onPress={onReset}
-        accessibilityLabel="Reset Session"
-      >
-        <Text style={styles.resetButtonText}>Reset</Text>
+      <TouchableOpacity style={styles.controlButton} onPress={onStartPause} accessibilityLabel={isRunning ? "Pause Timer" : "Start Timer"}>
+        <IconSymbol name={isRunning ? "pause" : "play"} size={24} color="#fff" />
+        <ThemedText style={styles.controlButtonText}>{isRunning ? 'Pause' : 'Start'}</ThemedText>
       </TouchableOpacity>
     </View>
   );
@@ -35,34 +30,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginBottom: 20,
-    marginTop: 30,
   },
-  actionButton: {
-    backgroundColor: '#687076',
-    paddingVertical: 20,
-    paddingHorizontal: 40,
+  controlButton: {
+    backgroundColor: '#2c3e50',
+    paddingVertical: 15,
+    paddingHorizontal: 25,
     borderRadius: 10,
-    flex: 1,
-    marginHorizontal: 5,
+    alignItems: 'center',
   },
-  actionButtonText: {
+  controlButtonText: {
     color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  resetButton: {
-    backgroundColor: '#cc3333',
-    paddingVertical: 20,
-    paddingHorizontal: 40,
-    borderRadius: 10,
-    flex: 1,
-    marginHorizontal: 5,
-  },
-  resetButtonText: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    marginLeft: 8,
   },
 });
