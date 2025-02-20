@@ -38,6 +38,15 @@ export class TimerServiceImpl implements TimerService {
     }
   }
 
+  reset(): void { // ADDED reset method implementation back to TimerServiceImpl
+    console.log("TimerServiceImpl: reset() called"); // ADDED LOG
+    clearInterval(this.intervalId);
+    this.intervalId = null;
+    this.startTime = 0; // Ensure startTime is reset to 0
+    this.elapsedTimeMs = 0; // Ensure elapsedTimeMs is reset to 0
+    this.lastUpdateTime = 0;
+  }
+
   getElapsedTimeMs(): number {
     this.updateElapsedTime(); // Ensure elapsed time is up-to-date before returning
     console.log("TimerServiceImpl: getElapsedTimeMs() returning:", this.elapsedTimeMs); // ADDED LOG
