@@ -9,6 +9,8 @@ import { WorkSession } from '@/domain/entities/WorkSession';
 import { MetricsDisplay } from '@/components/MetricsDisplay';
 import { TimerControls } from '@/components/TimerControls';
 import { useWorkSession } from '@/contexts/WorkSessionContext';
+import { useWorkTimerService } from '@/contexts/WorkSessionContext'; // Import useWorkTimerService
+
 
 /**
  * Presentation Layer - UI (React Component)
@@ -31,51 +33,65 @@ export default function PlayScreen() {
 
   // --- Domain Entity Instance ---
   const workSession = useWorkSession();
+  const workTimerService = useWorkTimerService(); // Get WorkTimerService from context
 
   // --- Controller ---
-  const [controller] = useState(() => new PlayScreenController(workSession));
+  const [controller] = useState(() => new PlayScreenController(workSession, workTimerService)); // Pass workTimerService
+
 
   // --- Effects ---
   useEffect(() => {
     // Initialize state from controller on component mount
-    const initialIsRunning = controller.isRunning();
-    const initialClicks = controller.getClicks();
-    const initialElapsedTime = controller.getElapsedTimeMs();
+    if (controller) { // Check if controller is defined
+      const initialIsRunning = controller.isRunning();
+      const initialClicks = controller.getClicks();
+      const initialElapsedTime = controller.getElapsedTimeMs();
 
-    setIsRunning(initialIsRunning);
-    setClicks(initialClicks);
-    setElapsedTime(initialElapsedTime);
-    // setDisplayTime(formatTime(initialElapsedTime)); // REMOVE displayTime initialization from PlayScreen
+      setIsRunning(initialIsRunning);
+      setClicks(initialClicks);
+      setElapsedTime(initialElapsedTime);
+      // setDisplayTime(formatTime(initialElapsedTime)); // REMOVE displayTime initialization from PlayScreen
 
-    console.log("PlayScreen: useEffect (initial state) - isRunning:", initialIsRunning, "clicks:", initialClicks, "elapsedTime:", initialElapsedTime, "upm:", upm);
+      console.log("PlayScreen: useEffect (initial state) - isRunning:", initialIsRunning, "clicks:", initialClicks, "elapsedTime:", initialElapsedTime, "upm:", upm);
+    } else {
+      console.log("PlayScreen: useEffect (initial state) - controller is undefined!");
+    }
   }, [controller]);
 
   useEffect(() => {
     // Subscribe to time updates from controller
-    const updateTime = (elapsedTimeMs: number) => {
-      setElapsedTime(elapsedTimeMs);
-      console.log("PlayScreen: updateTime callback - elapsedTimeMs:", elapsedTimeMs);
-    };
-    controller.onElapsedTimeUpdate(updateTime);
-    console.log("PlayScreen: useEffect (onElapsedTimeUpdate) - callback set");
+    if (controller) { // Check if controller is defined
+      const updateTime = (elapsedTimeMs: number) => {
+        setElapsedTime(elapsedTimeMs);
+        console.log("PlayScreen: updateTime callback - elapsedTimeMs:", elapsedTimeMs);
+      };
+      controller.onElapsedTimeUpdate(updateTime);
+      console.log("PlayScreen: useEffect (onElapsedTimeUpdate) - callback set");
 
-    // Subscribe to UPM updates from controller
-    const updateUPM = (currentUPM: number) => {
-      setUpm(currentUPM);
-      console.log("PlayScreen: updateUPM callback - upm:", currentUPM);
-    };
-    controller.onUPMUpdate(updateUPM);
-    console.log("PlayScreen: useEffect (onUPMUpdate) - UPM callback set");
+      // Subscribe to UPM updates from controller
+      const updateUPM = (currentUPM: number) => {
+        setUpm(currentUPM);
+        console.log("PlayScreen: updateUPM callback - upm:", currentUPM);
+      };
+      controller.onUPMUpdate(updateUPM);
+      console.log("PlayScreen: useEffect (onUPMUpdate) - UPM callback set");
 
 
-    // Cleanup on unmount
-    return () => {
-      controller.clearElapsedTimeUpdateCallback();
-      controller.clearUPMUpdateCallback();
-      controller.pauseTimer();
-      setIsRunning(controller.isRunning());
-      console.log("PlayScreen: useEffect (onElapsedTimeUpdate) - cleanup - callbacks cleared, timer paused, isRunning:", isRunning);
-    };
+      // Cleanup on unmount
+      return () => {
+        if (controller) { // Check if controller is defined before cleanup
+          controller.clearElapsedTimeUpdateCallback();
+          controller.clearUPMUpdateCallback();
+          controller.pauseTimer();
+          setIsRunning(controller.isRunning());
+          console.log("PlayScreen: useEffect (onElapsedTimeUpdate) - cleanup - callbacks cleared, timer paused, isRunning:", isRunning);
+        } else {
+          console.log("PlayScreen: useEffect (onElapsedTimeUpdate) - cleanup - controller is undefined, no cleanup needed.");
+        }
+      };
+    } else {
+      console.log("PlayScreen: useEffect (onElapsedTimeUpdate) - controller is undefined, skipping effect.");
+    }
   }, [controller]);
 
   // REMOVE useEffect for displayTime from PlayScreen
@@ -96,10 +112,14 @@ export default function PlayScreen() {
   // --- Event Handlers ---
   const handleIncrementClick = () => {
     console.log("PlayScreen: handleIncrementClick() called - START"); // ADDED LOG - START
-    controller.incrementClicks((updatedClicks) => {
-      setClicks(updatedClicks);
-      console.log("PlayScreen: handleIncrementClick() - clicks updated to:", updatedClicks);
-    });
+    if (controller) {
+      controller.incrementClicks((updatedClicks) => {
+        setClicks(updatedClicks);
+        console.log("PlayScreen: handleIncrementClick() - clicks updated to:", updatedClicks);
+      });
+    } else {
+      console.log("PlayScreen: handleIncrementClick() - controller is undefined, click increment ignored.");
+    }
     console.log("PlayScreen: handleIncrementClick() called - END"); // ADDED LOG - END
   };
 
@@ -108,10 +128,10 @@ export default function PlayScreen() {
     let updatedIsRunning: boolean;
     if (isRunning) {
       console.log("PlayScreen: handleStartPause() - isRunning is true, pausing timer"); // LOG 2: isRunning is true (Pause case)
-      updatedIsRunning = controller.pauseTimer(); // Use controller to pause and get isRunning status
+      updatedIsRunning = controller?.pauseTimer() ?? false; // Use optional chaining and nullish fallback
     } else {
       console.log("PlayScreen: handleStartPause() - isRunning is false, starting timer"); // LOG 3: isRunning is false (Start case)
-      updatedIsRunning = controller.startTimer(); // Use controller to start and get isRunning status
+      updatedIsRunning = controller?.startTimer() ?? false; // Use optional chaining and nullish fallback
     }
     console.log("PlayScreen: handleStartPause() - controller method returned:", updatedIsRunning); // LOG 4: Value returned from controller
     setIsRunning(updatedIsRunning); // Update local isRunning state based on controller status - NOW USING RETURNED VALUE
@@ -120,7 +140,7 @@ export default function PlayScreen() {
 
   const handleReset = () => {
     console.log("PlayScreen: handleReset() called");
-    const updatedIsRunning = controller.resetSession();
+    const updatedIsRunning = controller?.resetSession() ?? false; // Use optional chaining and nullish fallback
     setIsRunning(updatedIsRunning);
     setElapsedTime(0);
     // setDisplayTime("00:00"); // REMOVE displayTime reset from PlayScreen
