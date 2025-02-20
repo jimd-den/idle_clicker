@@ -244,6 +244,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginBottom: 30,
     alignSelf: 'center',
+    paddingVertical: 35, // Reduced paddingVertical slightly
   },
   clickButtonText: {
     color: '#fff',
