@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { StyleSheet, View, TouchableOpacity, TextInput, FlatList } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, TextInput, FlatList, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
@@ -230,10 +230,11 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   metricsContainer: {
-    paddingTop: 8,
+    paddingTop: Platform.OS === 'ios' ? '2%' : '1%',
   },
   mainContent: {
     flex: 1,

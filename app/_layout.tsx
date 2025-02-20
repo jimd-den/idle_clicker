@@ -6,8 +6,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { SessionProvider } from '@/contexts/SessionContext';
-import { WorkSessionProvider } from '@/contexts/WorkSessionContext';
-import { Colors } from '@/constants/Colors';
+import { WorkSessionProvider } from '@/contexts/WorkSessionContext'; // Import WorkSessionProvider
+import Colors from '@/constants/Colors';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -52,10 +52,10 @@ function RootLayoutNav() {
   return (
     <SessionProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <WorkSessionProvider>
+        <WorkSessionProvider> {/* Wrap the entire layout with WorkSessionProvider */}
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="modal" presentation="modal" />
           </Stack>
         </WorkSessionProvider>
       </ThemeProvider>

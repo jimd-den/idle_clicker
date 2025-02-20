@@ -1,6 +1,7 @@
 import { Link } from 'expo-router';
-import React, { useState } from 'react';
+import React from 'react';
 import { StyleSheet, View, TouchableOpacity, ActivityIndicator } from 'react-native';
+
 import { HelloWave } from '@/components/HelloWave';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -11,21 +12,11 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { getAllSessions, startNewSession, isLoading, error: contextError } = useSession();
-  const [isStarting, setIsStarting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { getAllSessions, startNewSession, isLoading } = useSession();
 
-  const handleStartNewSession = async () => {
-    try {
-      setError(null);
-      setIsStarting(true);
-      await startNewSession();
-      router.push('/play');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to start session');
-    } finally {
-      setIsStarting(false);
-    }
+  const handleStartNewSession = () => {
+    startNewSession();
+    router.push('/play');
   };
 
   return (
@@ -33,13 +24,6 @@ export default function HomeScreen() {
       <HelloWave />
       <ThemedText type="title" style={styles.title}>Non-Idle Clicker</ThemedText>
       
-      {(error || contextError) && (
-        <View style={styles.errorContainer}>
-          <IconSymbol name="xmark.circle" size={20} color="#e74c3c" />
-          <ThemedText style={styles.errorText}>{error || contextError}</ThemedText>
-        </View>
-      )}
-
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#0a7ea4" />
@@ -48,19 +32,12 @@ export default function HomeScreen() {
       ) : (
         <>
           <TouchableOpacity 
-            style={[styles.newSessionButton, isStarting && styles.newSessionButtonDisabled]} 
+            style={styles.newSessionButton} 
             onPress={handleStartNewSession}
-            disabled={isStarting}
           >
             <View style={styles.buttonContent}>
-              {isStarting ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <IconSymbol name="play.circle.fill" size={24} color="#fff" />
-              )}
-              <ThemedText style={styles.buttonText}>
-                {isStarting ? 'Starting...' : 'Start New Session'}
-              </ThemedText>
+              <IconSymbol name="play.circle.fill" size={24} color="#fff" />
+              <ThemedText style={styles.buttonText}>Start New Session</ThemedText>
             </View>
           </TouchableOpacity>
 
@@ -131,22 +108,5 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
-  },
-  errorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(231, 76, 60, 0.1)',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-    gap: 8,
-  },
-  errorText: {
-    color: '#e74c3c',
-    fontSize: 14,
-    flex: 1,
-  },
-  newSessionButtonDisabled: {
-    opacity: 0.7,
   },
 });
