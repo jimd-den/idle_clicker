@@ -175,9 +175,10 @@ export default function PlayScreen() {
 
       {/* Middle Module: Work Unit Input */}
       <TouchableOpacity
-        style={styles.clickButton}
+        style={[styles.clickButton, !isRunning ? styles.clickButtonDisabled : {}]} // Apply disabled style
         onPress={handleIncrementClick}
         accessibilityLabel="Click to increment work units"
+        disabled={!isRunning} // Disable button when not running
       >
         {/* Re-wrap "Click!" in ThemedText just to be sure */}
         <ThemedText style={styles.clickButtonText}>Click!</ThemedText>
@@ -251,6 +252,9 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  clickButtonDisabled: {
+    backgroundColor: 'gray', // Style for disabled button
   },
   bottomModuleContainer: {
     marginBottom: 20,
