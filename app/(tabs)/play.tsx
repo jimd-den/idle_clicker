@@ -68,7 +68,7 @@ export default function PlayScreen() {
     // Subscribe to time updates from controller
     if (controller) { // Check if controller is defined
       const updateTime = (elapsedTimeMs: number) => {
-        setElapsedTime(elapsedTimeMs);
+        setElapsedTime(Math.floor(elapsedTimeMs)); // Apply Math.floor here as well
         console.log("PlayScreen: updateTime callback - elapsedTimeMs:", elapsedTimeMs);
       };
       controller.onElapsedTimeUpdate(updateTime);
