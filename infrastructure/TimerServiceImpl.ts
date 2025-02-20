@@ -20,52 +20,52 @@ export class TimerServiceImpl implements TimerService {
   private timeUpdateCallback: ((elapsedTimeMs: number) => void) | null = null;
 
   start(): void {
-    console.log("TimerServiceImpl: start() called - START"); // ADDED LOG
-    console.log("TimerServiceImpl: start() - Before start - intervalId:", this.intervalId, "startTime:", this.startTime, "elapsedTimeMs:", this.elapsedTimeMs); // ADDED LOG
+    console.log("TimerServiceImpl: start() called - START");
+    console.log("TimerServiceImpl: start() - Before start - intervalId:", this.intervalId, "startTime:", this.startTime, "elapsedTimeMs:", this.elapsedTimeMs);
     if (!this.intervalId) {
-      this.startTime = Date.now() - this.elapsedTimeMs; // Adjust start time based on elapsed time
+      this.startTime = Date.now(); // <---- MODIFIED: Always set startTime to current Date.now()
       this.lastUpdateTime = Date.now();
       this.intervalId = setInterval(() => {
         this.updateElapsedTime();
       }, 16); // Update approximately every 16ms (60 FPS)
     }
-    console.log("TimerServiceImpl: start() - After start - intervalId:", this.intervalId, "startTime:", this.startTime, "elapsedTimeMs:", this.elapsedTimeMs); // ADDED LOG
-    console.log("TimerServiceImpl: start() called - END"); // ADDED LOG
+    console.log("TimerServiceImpl: start() - After start - intervalId:", this.intervalId, "startTime:", this.startTime, "elapsedTimeMs:", this.elapsedTimeMs);
+    console.log("TimerServiceImpl: start() called - END");
   }
 
   pause(): void {
-    console.log("TimerServiceImpl: pause() called"); // ADDED LOG
+    console.log("TimerServiceImpl: pause() called");
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
   }
 
-  reset(): void { // ADDED reset method implementation back to TimerServiceImpl
-    console.log("TimerServiceImpl: reset() called - START"); // ADDED LOG
-    console.log("TimerServiceImpl: reset() - Before reset - intervalId:", this.intervalId, "startTime:", this.startTime, "elapsedTimeMs:", this.elapsedTimeMs); // ADDED LOG
+  reset(): void {
+    console.log("TimerServiceImpl: reset() called - START");
+    console.log("TimerServiceImpl: reset() - Before reset - intervalId:", this.intervalId, "startTime:", this.startTime, "elapsedTimeMs:", this.elapsedTimeMs);
     clearInterval(this.intervalId);
     this.intervalId = null;
-    this.startTime = 0; // Ensure startTime is reset to 0
-    this.elapsedTimeMs = 0; // Ensure elapsedTimeMs is reset to 0
+    this.startTime = 0;
+    this.elapsedTimeMs = 0;
     this.lastUpdateTime = 0;
-    console.log("TimerServiceImpl: reset() - After reset - intervalId:", this.intervalId, "startTime:", this.startTime, "elapsedTimeMs:", this.elapsedTimeMs); // ADDED LOG
-    console.log("TimerServiceImpl: reset() called - END"); // ADDED LOG
+    console.log("TimerServiceImpl: reset() - After reset - intervalId:", this.intervalId, "startTime:", this.startTime, "elapsedTimeMs:", this.elapsedTimeMs);
+    console.log("TimerServiceImpl: reset() called - END");
   }
 
   getElapsedTimeMs(): number {
-    this.updateElapsedTime(); // Ensure elapsed time is up-to-date before returning
-    console.log("TimerServiceImpl: getElapsedTimeMs() returning:", this.elapsedTimeMs); // ADDED LOG
+    this.updateElapsedTime();
+    console.log("TimerServiceImpl: getElapsedTimeMs() returning:", this.elapsedTimeMs);
     return this.elapsedTimeMs;
   }
 
   onTimeUpdate(callback: (elapsedTimeMs: number) => void): void {
-    console.log("TimerServiceImpl: onTimeUpdate() setting callback"); // ADDED LOG
+    console.log("TimerServiceImpl: onTimeUpdate() setting callback");
     this.timeUpdateCallback = callback;
   }
 
   clearTimeUpdateCallback(): void {
-    console.log("TimerServiceImpl: clearTimeUpdateCallback() called"); // ADDED LOG
+    console.log("TimerServiceImpl: clearTimeUpdateCallback() called");
     this.timeUpdateCallback = null;
   }
 
@@ -75,7 +75,7 @@ export class TimerServiceImpl implements TimerService {
       this.elapsedTimeMs = now - this.startTime;
       this.lastUpdateTime = now;
       if (this.timeUpdateCallback) {
-        console.log("TimerServiceImpl: updateElapsedTime callback invoked with elapsedTimeMs:", this.elapsedTimeMs); // ADDED LOG
+        console.log("TimerServiceImpl: updateElapsedTime callback invoked with elapsedTimeMs:", this.elapsedTimeMs);
         this.timeUpdateCallback(this.elapsedTimeMs);
       }
     }
