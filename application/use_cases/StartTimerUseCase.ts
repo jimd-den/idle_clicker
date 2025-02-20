@@ -1,8 +1,6 @@
-import { WorkSession } from '@/domain/entities/WorkSession';
+import { UseCase } from './UseCase';
 
-export class StartTimerUseCase {
-  constructor(private workSession: WorkSession) {}
-
+export class StartTimerUseCase extends UseCase {
   execute(): void {
     this.workSession.start();
   }

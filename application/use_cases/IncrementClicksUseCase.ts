@@ -1,8 +1,6 @@
-import { WorkSession } from '@/domain/entities/WorkSession';
+import { UseCase } from './UseCase';
 
-export class IncrementClicksUseCase {
-  constructor(private workSession: WorkSession) {}
-
+export class IncrementClicksUseCase extends UseCase {
   execute(): void {
     this.workSession.recordClick();
   }
