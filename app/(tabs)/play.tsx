@@ -36,7 +36,13 @@ export default function PlayScreen() {
   const workTimerService = useWorkTimerService(); // Get WorkTimerService from context
 
   // --- Controller ---
-  const [controller] = useState(() => new PlayScreenController(workSession, workTimerService)); // Pass workTimerService
+  // Changed from useState to useRef
+  const controllerRef = useRef<PlayScreenController | null>(null);
+
+  if (!controllerRef.current) {
+    controllerRef.current = new PlayScreenController(workSession, workTimerService);
+  }
+  const controller = controllerRef.current;
 
 
   // --- Effects ---
