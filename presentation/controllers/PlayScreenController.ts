@@ -43,6 +43,7 @@ export class PlayScreenController {
 
     // Set up elapsed time update callback to also update UPM
     this.workTimerService.onElapsedTimeUpdate((elapsedTimeMs) => {
+      console.log("PlayScreenController: onElapsedTimeUpdate - elapsedTimeMs callback triggered:", elapsedTimeMs); // ADDED LOG
       this.updateUPM(); // Recalculate UPM whenever elapsed time updates - **MOVE CALL INSIDE CALLBACK**
     });
   }
@@ -96,16 +97,22 @@ export class PlayScreenController {
   }
 
   private updateUPM(): void {
+    console.log("PlayScreenController: updateUPM() - START"); // ADDED LOG
     const elapsedTimeMs = this.workTimerService.getElapsedTimeMs();
     const clicks = this.workTimerService.getClicks();
+    console.log("PlayScreenController: updateUPM() - elapsedTimeMs:", elapsedTimeMs, "clicks:", clicks); // ADDED LOG
     let currentUPM = 0;
     if (elapsedTimeMs > 0) {
       currentUPM = clicks / (elapsedTimeMs / 60000);
     }
-    console.log("PlayScreenController: updateUPM() - elapsedTimeMs:", elapsedTimeMs, "clicks:", clicks, "upm:", currentUPM);
+    console.log("PlayScreenController: updateUPM() - calculated upm:", currentUPM); // ADDED LOG
     if (this.upmUpdateCallback) {
       this.upmUpdateCallback(currentUPM); // Notify UI about UPM update
+      console.log("PlayScreenController: updateUPM() - upmUpdateCallback invoked with:", currentUPM); // ADDED LOG
+    } else {
+      console.log("PlayScreenController: updateUPM() - upmUpdateCallback is null!"); // ADDED LOG
     }
+    console.log("PlayScreenController: updateUPM() - END"); // ADDED LOG
   }
 
   onUPMUpdate(callback: (upm: number) => void) {
