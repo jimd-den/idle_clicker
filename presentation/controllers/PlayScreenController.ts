@@ -43,7 +43,7 @@ export class PlayScreenController {
 
     // Set up elapsed time update callback to also update UPM
     this.workTimerService.onElapsedTimeUpdate((elapsedTimeMs) => {
-      this.updateUPM(); // Recalculate UPM whenever elapsed time updates
+      this.updateUPM(); // Recalculate UPM whenever elapsed time updates - **MOVE CALL INSIDE CALLBACK**
     });
   }
 
@@ -62,7 +62,7 @@ export class PlayScreenController {
     this.workTimerService.incrementClicks(); // Now just call service method
     const updatedClicks = this.workTimerService.getClicks();
     updateClicksUI(updatedClicks); // Invoke callback to update UI
-    this.updateUPM();
+    this.updateUPM(); // Recalculate UPM after click as well - **KEEP THIS CALL**
   }
 
   resetSession(): boolean { // Modified to return boolean - although reset always stops timer
