@@ -1,25 +1,37 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import { ThemedText } from '../components/ThemedText';
 import { IconSymbol } from './ui/IconSymbol';
-import { MetricsUpdate } from '@/application/services/WorkTimerService'; // Import MetricsUpdate
 
 interface TimerControlsProps {
   isRunning: boolean;
   onStartPause: () => void;
-  onReset: () => MetricsUpdate; // Modified onReset to return MetricsUpdate
+  onReset: () => void;
 }
 
 export function TimerControls({ isRunning, onStartPause, onReset }: TimerControlsProps) {
   return (
     <View style={styles.controlsContainer}>
-      <TouchableOpacity style={styles.controlButton} onPress={onReset} accessibilityLabel="Reset Timer">
-        <IconSymbol name="reset" size={24} color="#fff" />
-        <ThemedText style={styles.controlButtonText}>Reset</ThemedText>
+      <TouchableOpacity 
+        style={[styles.controlButton, isRunning && styles.controlButtonDisabled]} 
+        onPress={onReset} 
+        accessibilityRole="button"
+        accessibilityLabel="Reset Timer"
+        accessibilityState={{ disabled: isRunning }}
+        disabled={isRunning}
+      >
+        <IconSymbol name="arrow.counterclockwise" size={28} color={isRunning ? "#666" : "#fff"} />
       </TouchableOpacity>
-      <TouchableOpacity style={styles.controlButton} onPress={onStartPause} accessibilityLabel={isRunning ? "Pause Timer" : "Start Timer"}>
-        <IconSymbol name={isRunning ? "pause" : "play"} size={24} color="#fff" />
-        <ThemedText style={styles.controlButtonText}>{isRunning ? 'Pause' : 'Start'}</ThemedText>
+      <TouchableOpacity 
+        style={[styles.controlButton, styles.playPauseButton]} 
+        onPress={onStartPause}
+        accessibilityRole="button"
+        accessibilityLabel={isRunning ? "Pause Timer" : "Start Timer"}
+      >
+        <IconSymbol 
+          name={isRunning ? "pause.circle.fill" : "play.circle.fill"} 
+          size={48} 
+          color="#fff" 
+        />
       </TouchableOpacity>
     </View>
   );
@@ -28,18 +40,24 @@ export function TimerControls({ isRunning, onStartPause, onReset }: TimerControl
 const styles = StyleSheet.create({
   controlsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 24,
   },
   controlButton: {
-    backgroundColor: '#2c3e50',
-    paddingVertical: 15,
-    paddingHorizontal: 25,
+    padding: 12,
     borderRadius: 10,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  controlButtonText: {
-    color: '#fff',
-    marginLeft: 8,
+  playPauseButton: {
+    backgroundColor: '#2c3e50',
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+  },
+  controlButtonDisabled: {
+    opacity: 0.5,
   },
 });

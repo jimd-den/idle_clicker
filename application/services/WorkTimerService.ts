@@ -138,7 +138,7 @@ export class WorkTimerService {
   private calculateUPM(elapsedTimeMs: number, clicks: number): number { // UPM calculation method
     let currentUPM = 0;
     if (elapsedTimeMs > 0) {
-      currentUPM = clicks / (elapsedTimeMs / 60000);
+      currentUPM = Math.round((clicks / (elapsedTimeMs / 60000)) * 10) / 10;
     }
     return currentUPM;
   }

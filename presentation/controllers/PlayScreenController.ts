@@ -1,5 +1,16 @@
 /**
  * Presentation Layer - Controllers
+ */
+
+interface MetricsUpdate {
+  elapsedTimeMs: number;
+  upm: number;
+  isRunning: boolean;
+  clicks: number;
+}
+
+/**
+ * Presentation Layer - Controllers
  *
  * PlayScreenController: Controller for the PlayScreen.
  * It mediates between the PlayScreen UI and the Application Layer (WorkTimerService).
