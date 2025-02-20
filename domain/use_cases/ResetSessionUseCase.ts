@@ -14,7 +14,7 @@ import { WorkSession } from '../entities/WorkSession';
 export class ResetSessionUseCase {
   constructor(private workSession: WorkSession) {}
 
-  execute(): void {
-    this.workSession.reset();
+  execute(autoStart: boolean = false): void {
+    this.workSession.reset(autoStart);
   }
 }

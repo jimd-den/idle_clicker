@@ -14,19 +14,10 @@ export class WorkSession {
 
   start(): void {
     console.log("WorkSession: start() called - before start - startTime:", this.startTime, "endTime:", this.endTime); // ADDED LOG
-    if (!this.startTime) {
-      this.startTime = new Date();
-      console.log("WorkSession: start() - timer started - startTime:", this.startTime); // ADDED LOG
-    } else if (this.endTime) {
-      // Timer was paused and is being restarted
-      this.startTime = new Date();
-      this.endTime = null; // Clear endTime when restarting
-      console.log("WorkSession: start() - timer restarted after pause - startTime:", this.startTime, "endTime cleared:", this.endTime); // ADDED LOG
-    }
-     else {
-      console.log("WorkSession: start() - timer already started, ignoring call"); // ADDED LOG
-    }
-    console.log("WorkSession: start() - after start - startTime:", this.startTime, "endTime:", this.endTime); // ADDED LOG
+    // Always start the timer when start is called
+    this.startTime = new Date();
+    this.endTime = null; // Clear endTime to indicate timer is running
+    console.log("WorkSession: start() - timer started/restarted - startTime:", this.startTime, "endTime:", this.endTime); // ADDED LOG
   }
 
   pause(): void {
@@ -34,19 +25,22 @@ export class WorkSession {
     if (this.startTime && !this.endTime) {
       this.endTime = new Date();
       console.log("WorkSession: pause() - timer paused - endTime:", this.endTime); // ADDED LOG
-    } else {
-      console.log("WorkSession: pause() - timer not running or already paused, ignoring call"); // ADDED LOG
     }
     console.log("WorkSession: pause() - after pause - startTime:", this.startTime, "endTime:", this.endTime); // ADDED LOG
   }
 
-  reset(): void {
+  reset(autoStart: boolean = false): void {
     console.log("WorkSession: reset() called - before reset - startTime:", this.startTime, "endTime:", this.endTime, "elapsedTimeMs:", this.elapsedTimeMs, "clicks:", this.clicks); // ADDED LOG
     this.startTime = null;
     this.endTime = null;
     this.elapsedTimeMs = 0;
     this.clicks = 0;
     console.log("WorkSession: reset() - session reset - startTime:", this.startTime, "endTime:", this.endTime, "elapsedTimeMs:", this.elapsedTimeMs, "clicks:", this.clicks); // ADDED LOG
+    
+    if (autoStart) {
+      console.log("WorkSession: reset() - auto-starting timer");
+      this.start();
+    }
   }
 
   recordClick(): void {

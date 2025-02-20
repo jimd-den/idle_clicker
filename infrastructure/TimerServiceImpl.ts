@@ -32,7 +32,7 @@ export class TimerServiceImpl implements TimerService {
           console.log("TimerServiceImpl: onTimeUpdate callback invoked with elapsedTimeMs:", this.elapsedTimeMs); // ADDED LOG
           this.timeUpdateCallback(this.elapsedTimeMs);
         }
-      }, 1000); // Update every second
+      }, 16); // Update approximately every 16ms (60 FPS)
     }
   }
 
