@@ -46,7 +46,7 @@ export class PlayScreenController {
     this.workTimerService.onMetricsUpdate(({ elapsedTimeMs, upm }) => { // Listen for combined metrics update
       console.log("PlayScreenController: onMetricsUpdate - metrics callback triggered:", elapsedTimeMs, upm); // ADDED LOG
       if (this.elapsedTimeUpdateCallback) {
-        this.elapsedTimeUpdateCallback(elapsedTimeMs); // Forward elapsed time update to UI
+        this.elapsedTimeUpdateCallback(Math.floor(elapsedTimeMs)); // Forward elapsed time update to UI, removing decimal places
       }
       if (this.upmUpdateCallback) {
         this.upmUpdateCallback(upm); // Forward UPM update to UI
