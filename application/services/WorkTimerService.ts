@@ -97,7 +97,7 @@ export class WorkTimerService {
   resetSession(): boolean {
     console.log("WorkTimerService: resetSession() - WorkSession instance:", this.workSession); // ADDED LOG
     this.resetSessionUseCase.execute(true); // Pass autoStart=true
-    this.timerService.clearTimeUpdateCallback();
+    // this.timerService.clearTimeUpdateCallback(); // <-- REMOVE THIS LINE
     this.timerService.start(); // Start the timer service since we auto-started WorkSession
     return this.isRunning();
   }
