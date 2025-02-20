@@ -14,26 +14,31 @@ export class WorkSession {
   }
 
   start(): void {
-    console.log("WorkSession: start() called - before start - startTime:", this.startTime, "endTime:", this.endTime); // ADDED LOG
+    console.log("WorkSession: start() called - START"); // ADDED LOG
+    console.log("WorkSession: start() - Before start - startTime:", this.startTime, "endTime:", this.endTime, "elapsedTimeMs:", this.elapsedTimeMs); // ADDED LOG
     // Always start the timer when start is called
     this.startTime = new Date();
     this.endTime = null; // Clear endTime to indicate timer is running
     console.log("WorkSession: start() - timer started/restarted - startTime:", this.startTime, "endTime:", this.endTime); // ADDED LOG
     // this.timerService.start(); // REMOVE TimerService interaction - WorkSession should not depend on Infrastructure
+    console.log("WorkSession: start() called - END"); // ADDED LOG
   }
 
   pause(): void {
-    console.log("WorkSession: pause() called - before pause - startTime:", this.startTime, "endTime:", this.endTime); // ADDED LOG
+    console.log("WorkSession: pause() called - START"); // ADDED LOG
+    console.log("WorkSession: pause() - before pause - startTime:", this.startTime, "endTime:", this.endTime, "elapsedTimeMs:", this.elapsedTimeMs); // ADDED LOG
     if (this.startTime && !this.endTime) {
       this.endTime = new Date();
       console.log("WorkSession: pause() - timer paused - endTime:", this.endTime); // ADDED LOG
     }
     console.log("WorkSession: pause() - after pause - startTime:", this.startTime, "endTime:", this.endTime); // ADDED LOG
     // this.timerService.pause(); // REMOVE TimerService interaction - WorkSession should not depend on Infrastructure
+    console.log("WorkSession: pause() called - END"); // ADDED LOG
   }
 
   reset(autoStart: boolean = false): void {
-    console.log("WorkSession: reset() called - before reset - startTime:", this.startTime, "endTime:", this.endTime, "elapsedTimeMs:", this.elapsedTimeMs, "clicks:", this.clicks); // ADDED LOG
+    console.log("WorkSession: reset() called - START"); // ADDED LOG
+    console.log("WorkSession: reset() - before reset - startTime:", this.startTime, "endTime:", this.endTime, "elapsedTimeMs:", this.elapsedTimeMs, "clicks:", this.clicks); // ADDED LOG
     this.startTime = null;
     this.endTime = null;
     this.elapsedTimeMs = 0;
@@ -44,6 +49,7 @@ export class WorkSession {
       console.log("WorkSession: reset() - auto-starting timer");
       this.start(); // Just start WorkSession timer logic, TimerService start is handled elsewhere
     }
+    console.log("WorkSession: reset() called - END"); // ADDED LOG
   }
 
   recordClick(): void {
