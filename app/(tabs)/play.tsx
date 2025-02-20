@@ -153,7 +153,8 @@ export default function PlayScreen() {
         onPress={handleIncrementClick}
         accessibilityLabel="Click to increment work units"
       >
-        <Text style={styles.clickButtonText}>Click!</Text>
+        {/* Re-wrap "Click!" in ThemedText just to be sure */}
+        <ThemedText style={styles.clickButtonText}>Click!</ThemedText>
       </TouchableOpacity>
 
       {/* Bottom Module: Timer Control and Notes */}
