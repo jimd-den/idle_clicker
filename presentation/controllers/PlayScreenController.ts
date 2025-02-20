@@ -12,49 +12,33 @@
  * presentation logic.
  */
 
-import { WorkTimerService } from '@/application/services/WorkTimerService';
-import { TimerServiceImpl } from '@/infrastructure/TimerServiceImpl';
-import { StartTimerUseCase } from '@/domain/use_cases/StartTimerUseCase';
-import { PauseTimerUseCase } from '@/domain/use_cases/PauseTimerUseCase';
-import { IncrementClicksUseCase } from '@/domain/use_cases/IncrementClicksUseCase';
-import { ResetSessionUseCase } from '@/domain/use_cases/ResetSessionUseCase';
+import { WorkTimerService } from '@/application/services/WorkTimerService'; // Import WorkTimerService
+// Removed direct imports of Infrastructure and Use Cases
+// import { TimerServiceImpl } from '@/infrastructure/TimerServiceImpl';
+// import { StartTimerUseCase } from '@/domain/use_cases/StartTimerUseCase';
+// import { PauseTimerUseCase } from '@/domain/use_cases/PauseTimerUseCase';
+// import { IncrementClicksUseCase } from '@/domain/use_cases/IncrementClicksUseCase';
+// import { ResetSessionUseCase } from '@/domain/use_cases/ResetSessionUseCase';
 import { WorkSession } from '@/domain/entities/WorkSession';
 
 export class PlayScreenController {
-  private workTimerService: WorkTimerService;
+  private workTimerService: WorkTimerService; // Now depends on WorkTimerService, injected
   private workSessionInstance: WorkSession; // Keep track of WorkSession instance
   private upmUpdateCallback: ((upm: number) => void) | null = null; // Callback for UPM updates
 
 
   /**
    * Constructor for PlayScreenController.
-   * Now accepts a WorkSession instance as a dependency, which is then
-   * passed down to the WorkTimerService.
+   * Now accepts a WorkSession instance and a WorkTimerService instance as dependencies.
    *
    * @param workSession - Injected WorkSession instance from Presentation Layer.
+   * @param workTimerService - Injected WorkTimerService instance.
    */
-  constructor(workSession: WorkSession) { // Modified constructor to accept WorkSession
-    // Infrastructure Layer dependency
-    const timerService = new TimerServiceImpl();
+  constructor(workSession: WorkSession, workTimerService: WorkTimerService) { // Modified constructor to accept WorkTimerService
     this.workSessionInstance = workSession; // Use the injected WorkSession instance
+    this.workTimerService = workTimerService; // Use the injected WorkTimerService
 
-    // Use Cases - Domain Layer logic, now instantiated with the injected WorkSession
-    const startTimerUseCase = new StartTimerUseCase(workSession);
-    const pauseTimerUseCase = new PauseTimerUseCase(workSession);
-    const incrementClicksUseCase = new IncrementClicksUseCase(workSession);
-    const resetSessionUseCase = new ResetSessionUseCase(workSession);
-
-
-    // Application Layer - WorkTimerService, now receiving Use Cases, TimerService, and WorkSession
-    this.workTimerService = new WorkTimerService(
-      workSession, // Pass the injected WorkSession instance to WorkTimerService
-      startTimerUseCase,
-      pauseTimerUseCase,
-      incrementClicksUseCase,
-      resetSessionUseCase,
-      timerService
-    );
-    console.log("PlayScreenController: constructor - WorkTimerService created");
+    console.log("PlayScreenController: constructor - WorkTimerService injected");
     console.log("PlayScreenController: constructor - WorkSession instance:", this.workSessionInstance);
 
     // Set up elapsed time update callback to also update UPM
