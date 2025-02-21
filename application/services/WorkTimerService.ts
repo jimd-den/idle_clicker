@@ -104,16 +104,15 @@ export class WorkTimerServiceImpl implements WorkTimerService {
       const isRunning = this.workSession.isRunning();
       const clicks = this.workSession.getClicks();
 
-      // Only calculate new smoothness if we have clicks
       const timeGaps = this.calculateTimeGaps();
-      if (timeGaps.length > 0) {
+      if (this.clickTimes.length > 1) { // require at least two clicks for a valid time gap calculation
         const smoothnessMetrics = this.smoothnessCalculator.calculateSmoothnessScore(timeGaps);
         this.workSession.updateSmoothnessMetrics(smoothnessMetrics);
         
         const rewards = this.rpgRewardSystem.calculateRewards(smoothnessMetrics);
         this.workSession.updateRewards(rewards);
       }
-
+      
       const metrics: MetricsUpdate = {
         elapsedTimeMs,
         upm,
@@ -166,12 +165,14 @@ export class WorkTimerServiceImpl implements WorkTimerService {
     
     // Calculate new metrics from click times
     const timeGaps = this.calculateTimeGaps();
-    const smoothnessMetrics = this.smoothnessCalculator.calculateSmoothnessScore(timeGaps);
-    console.log('Calculated smoothness metrics:', smoothnessMetrics);
-    this.workSession.updateSmoothnessMetrics(smoothnessMetrics);
+    if (this.clickTimes.length > 1) { // Only calculate if we have at least two clicks
+      const smoothnessMetrics = this.smoothnessCalculator.calculateSmoothnessScore(timeGaps);
+      console.log('Calculated smoothness metrics:', smoothnessMetrics);
+      this.workSession.updateSmoothnessMetrics(smoothnessMetrics);
 
-    const rewards = this.rpgRewardSystem.calculateRewards(smoothnessMetrics);
-    this.workSession.updateRewards(rewards);
+      const rewards = this.rpgRewardSystem.calculateRewards(smoothnessMetrics);
+      this.workSession.updateRewards(rewards);
+    }
 
     // Force a metrics update
     if (this.metricsUpdateCallback) {

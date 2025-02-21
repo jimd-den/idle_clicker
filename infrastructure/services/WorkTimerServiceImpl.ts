@@ -1,5 +1,7 @@
 import { WorkTimerService } from '@/application/services/WorkTimerService';
 import { MetricsUpdate } from '@/types/metrics';
+import { SmoothnessCalculator } from '@/application/services/SmoothnessCalculator';
+import { RPGRewardSystem } from '@/application/services/RPGRewardSystem';
 
 export class WorkTimerServiceImpl implements WorkTimerService {
   private isTimerRunning: boolean = false;
@@ -8,6 +10,10 @@ export class WorkTimerServiceImpl implements WorkTimerService {
   private clicks: number = 0;
   private metricsCallback: ((metrics: MetricsUpdate) => void) | null = null;
   private updateInterval: ReturnType<typeof setInterval> | null = null;
+
+  private clickTimes: number[] = [];
+  private smoothnessCalculator: SmoothnessCalculator = new SmoothnessCalculator();
+  private rpgRewardSystem: RPGRewardSystem = new RPGRewardSystem();
 
   private getCurrentMetricsState(): MetricsUpdate {
     const currentTime = Date.now();
@@ -18,7 +24,7 @@ export class WorkTimerServiceImpl implements WorkTimerService {
     const minutes = elapsedTimeMs / (1000 * 60);
     const upm = minutes > 0 ? this.clicks / minutes : 0;
 
-    return {
+    const metrics: MetricsUpdate = {
       elapsedTimeMs,
       upm,
       isRunning: this.isTimerRunning,
@@ -37,6 +43,19 @@ export class WorkTimerServiceImpl implements WorkTimerService {
         streakMultiplier: 0
       }
     };
+
+    if (this.clickTimes.length > 1) {
+      const timeGaps = [];
+      for (let i = 1; i < this.clickTimes.length; i++) {
+        timeGaps.push(this.clickTimes[i] - this.clickTimes[i - 1]);
+      }
+      const smoothnessMetrics = this.smoothnessCalculator.calculateSmoothnessScore(timeGaps);
+      const rewards = this.rpgRewardSystem.calculateRewards(smoothnessMetrics);
+      metrics.smoothnessMetrics = smoothnessMetrics;
+      metrics.rewards = rewards;
+    }
+    
+    return metrics;
   }
 
   private startMetricsUpdate() {
@@ -78,6 +97,7 @@ export class WorkTimerServiceImpl implements WorkTimerService {
     this.startTime = 0;
     this.elapsedTime = 0;
     this.clicks = 0;
+    this.clickTimes = [];
     if (this.updateInterval) {
       clearInterval(this.updateInterval);
       this.updateInterval = null;
@@ -87,6 +107,11 @@ export class WorkTimerServiceImpl implements WorkTimerService {
 
   incrementClicks(): void {
     this.clicks++;
+    const currentTime = Date.now();
+    this.clickTimes.push(currentTime);
+    if (this.clickTimes.length > 10) {
+      this.clickTimes.shift();
+    }
     if (this.metricsCallback) {
       this.metricsCallback(this.getCurrentMetricsState());
     }

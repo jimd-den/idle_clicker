@@ -1,61 +1,39 @@
 export class SmoothnessCalculator {
-  calculateSmoothnessScore(timeGaps: number[]) {
-    console.log('SmoothnessCalculator input timeGaps:', timeGaps);
-    
-    const consistency = this.calculateConsistency(timeGaps);
-    const rhythm = this.calculateRhythm(timeGaps);
-    const flowState = (consistency + rhythm) / 2;
-    
-    const result = {
-      consistency: Math.round(consistency),
-      rhythm: Math.round(rhythm),
-      flowState: Math.round(flowState),
-      criticalSuccess: flowState > 90 ? 1 : 0,
-      criticalFailure: flowState < 10 ? 1 : 0
-    };
-    
-    console.log('SmoothnessCalculator output:', result);
-    return result;
-  }
-
-  private calculateConsistency(timeGaps: number[]): number {
-    if (timeGaps.length < 2) return 0;
-    
-    const avg = timeGaps.reduce((a, b) => a + b) / timeGaps.length;
-    const variance = timeGaps.reduce((acc, val) => acc + Math.pow(val - avg, 2), 0) / timeGaps.length;
-    const stdDev = Math.sqrt(variance);
-
-    // Make the scoring more lenient - using 20 instead of 50 as multiplier
-    const score = Math.max(0, Math.min(100, 100 - (stdDev / avg * 20)));
-    
-    console.log('Consistency calculation:', {
-      avg,
-      stdDev,
-      score
-    });
-    
-    return score;
-  }
-
-  private calculateRhythm(timeGaps: number[]): number {
-    if (timeGaps.length < 2) return 0;
-    
-    let rhythmScore = 0;
-    let validIntervals = 0;
-
-    for (let i = 1; i < timeGaps.length; i++) {
-      const ratio = timeGaps[i] / timeGaps[i-1];
-      
-      // Consider any ratio between 0.5 and 2.0 as potentially rhythmic
-      // Map this range to a 0-100 score
-      if (ratio >= 0.5 && ratio <= 2.0) {
-        const deviation = Math.abs(1 - ratio);
-        const intervalScore = Math.max(0, 100 - (deviation * 100));
-        rhythmScore += intervalScore;
-        validIntervals++;
-      }
-    }
-
-    return validIntervals > 0 ? rhythmScore / validIntervals : 0;
-  }
+	// Calculate smoothness based on the variability of time gaps between clicks.
+	calculateSmoothnessScore(timeGaps: number[]): {
+		consistency: number;
+		rhythm: number;
+		flowState: number;
+		criticalSuccess: number;
+		criticalFailure: number;
+	} {
+		if (timeGaps.length === 0) {
+			return { consistency: 0, rhythm: 0, flowState: 0, criticalSuccess: 0, criticalFailure: 0 };
+		}
+		// Calculate mean and standard deviation.
+		const n = timeGaps.length;
+		const mean = timeGaps.reduce((a, b) => a + b, 0) / n;
+		const variance = timeGaps.reduce((acc, gap) => acc + Math.pow(gap - mean, 2), 0) / n;
+		const stdDev = Math.sqrt(variance);
+		// Coefficient of variation (percentage)
+		const cv = mean > 0 ? (stdDev / mean) * 100 : 0;
+		// Higher variability means lower consistency.
+		const consistency = Math.round(Math.max(0, 100 - cv));
+		// For simplicity, use the same score for rhythm.
+		const rhythm = consistency;
+		// Flow state is a fraction of consistency.
+		const flowState = Math.round(consistency * 0.8);
+		// Define critical success as gaps within 10% deviation from the mean.
+		const criticalSuccess = timeGaps.filter(gap => Math.abs(gap - mean) <= mean * 0.1).length;
+		// Define critical failure as gaps deviating more than 50% from the mean.
+		const criticalFailure = timeGaps.filter(gap => Math.abs(gap - mean) > mean * 0.5).length;
+		
+		return {
+			consistency,
+			rhythm,
+			flowState,
+			criticalSuccess,
+			criticalFailure
+		};
+	}
 }

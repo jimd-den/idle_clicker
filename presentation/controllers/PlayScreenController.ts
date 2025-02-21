@@ -62,13 +62,17 @@ export class PlayScreenController {
     });
   }
 
+  private log(methodName: string) {
+    console.log(`PlayScreenController: ${methodName}() - WorkSession instance:`, this.workSessionInstance);
+  }
+
   startTimer(): boolean { // Modified to return boolean
-    console.log("PlayScreenController: startTimer() - WorkSession instance:", this.workSessionInstance);
+    this.log("startTimer");
     return this.workTimerService.startTimer(); // Now just call service method
   }
 
   pauseTimer(): boolean { // Modified to return boolean
-    console.log("PlayScreenController: pauseTimer() - WorkSession instance:", this.workSessionInstance);
+    this.log("pauseTimer");
     return this.workTimerService.pauseTimer(); // Now just call service method
   }
 
@@ -91,17 +95,17 @@ export class PlayScreenController {
   }
 
   isRunning(): boolean {
-    console.log("PlayScreenController: isRunning() - WorkSession instance:", this.workSessionInstance);
+    this.log("isRunning");
     return this.workTimerService.isRunning();
   }
 
   getElapsedTimeMs(): number {
-    console.log("PlayScreenController: getElapsedTimeMs() - WorkSession instance:", this.workSessionInstance);
+    this.log("getElapsedTimeMs");
     return this.workTimerService.getElapsedTimeMs();
   }
 
   getClicks(): number {
-    console.log("PlayScreenController: getClicks() - WorkSession instance:", this.workSessionInstance);
+    this.log("getClicks");
     return this.workTimerService.getClicks();
   }
 

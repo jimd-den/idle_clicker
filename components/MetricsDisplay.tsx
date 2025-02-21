@@ -143,16 +143,17 @@ export function MetricsDisplay({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
+    flexWrap: 'wrap', // allow items to wrap
     justifyContent: 'space-around',
     alignItems: 'center',
     paddingVertical: '5%',
     paddingHorizontal: 8,
     marginTop: Platform.OS === 'ios' ? 50 : 30,
-    minHeight: 120,
+    minHeight: 180, // increased to allow extra rows
   },
   metricContainer: {
     alignItems: 'center',
-    flex: 1,
+    width: '30%', // fixed width for up to three items per row
     paddingHorizontal: 4,
     paddingVertical: 8,
     minWidth: 80,
