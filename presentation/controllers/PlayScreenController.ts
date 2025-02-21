@@ -2,14 +2,7 @@
  * Presentation Layer - Controllers
  */
 
-interface MetricsUpdate {
-  smoothnessMetrics: { consistency: number; rhythm: number; flowState: number; criticalSuccess: number; criticalFailure: number; };
-  rewards: { experience: number; achievementPoints: number; flowBonus: number; streakMultiplier: number; };
-  elapsedTimeMs: number;
-  upm: number;
-  isRunning: boolean;
-  clicks: number;
-}
+import { MetricsUpdate } from '@/types/metrics';
 
 /**
  * Presentation Layer - Controllers

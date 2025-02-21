@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useCallback, useState, useEffect } from 'react';
 import { SessionService } from '@/application/services/SessionService';
 import { Session, SessionNote } from '@/domain/entities/Session';
+import { setErrorState } from '@/utils/errorUtils';
 
 interface SessionContextType {
   startNewSession: () => Promise<Session>;
@@ -25,7 +26,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         setError(null);
         await sessionService.initialize();
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to initialize sessions');
+        setErrorState(setError, err);
       } finally {
         setIsLoading(false);
       }
@@ -39,9 +40,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       return await sessionService.startNewSession();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to start new session';
-      setError(errorMessage);
-      throw new Error(errorMessage);
+      setErrorState(setError, err);
+      throw new Error(setErrorState(setError, err));
     }
   }, [sessionService]);
 
@@ -50,9 +50,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       return await sessionService.endCurrentSession(clicks, upm);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to end session';
-      setError(errorMessage);
-      throw new Error(errorMessage);
+      setErrorState(setError, err);
+      throw new Error(setErrorState(setError, err));
     }
   }, [sessionService]);
 
@@ -69,9 +68,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       await sessionService.addNote(note);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to add note';
-      setError(errorMessage);
-      throw new Error(errorMessage);
+      setErrorState(setError, err);
+      throw new Error(setErrorState(setError, err));
     }
   }, [sessionService]);
 

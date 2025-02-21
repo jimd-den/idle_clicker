@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { IconSymbol } from './ui/IconSymbol';
+import { commonStyles } from '@/styles/commonStyles';
 
 interface TimerControlsProps {
   isRunning: boolean;
@@ -12,7 +13,7 @@ export function TimerControls({ isRunning, onStartPause, onReset }: TimerControl
   return (
     <View style={styles.controlsContainer}>
       <TouchableOpacity 
-        style={[styles.controlButton, isRunning && styles.controlButtonDisabled]} 
+        style={[commonStyles.controlButton, isRunning && commonStyles.controlButtonDisabled]} 
         onPress={onReset} 
         accessibilityRole="button"
         accessibilityLabel="Reset Timer"
@@ -22,7 +23,7 @@ export function TimerControls({ isRunning, onStartPause, onReset }: TimerControl
         <IconSymbol name="arrow.counterclockwise" size={28} color={isRunning ? "#666" : "#fff"} />
       </TouchableOpacity>
       <TouchableOpacity 
-        style={[styles.controlButton, styles.playPauseButton]} 
+        style={[commonStyles.controlButton, commonStyles.playPauseButton]} 
         onPress={onStartPause}
         accessibilityRole="button"
         accessibilityLabel={isRunning ? "Pause Timer" : "Start Timer"}
@@ -44,20 +45,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
     gap: 24,
-  },
-  controlButton: {
-    padding: 12,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  playPauseButton: {
-    backgroundColor: '#2c3e50',
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-  },
-  controlButtonDisabled: {
-    opacity: 0.5,
   },
 });

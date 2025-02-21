@@ -12,26 +12,7 @@ import { useWorkSession } from '@/contexts/WorkSessionContext';
 import { useWorkTimerService } from '@/contexts/WorkSessionContext';
 import { useSession } from '@/contexts/SessionContext';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-
-interface MetricsUpdate {
-  elapsedTimeMs: number;
-  upm: number;
-  isRunning: boolean;
-  clicks: number;
-  smoothnessMetrics: {
-    consistency: number;
-    rhythm: number;
-    flowState: number;
-    criticalSuccess: number;
-    criticalFailure: number;
-  };
-  rewards: {
-    experience: number;
-    achievementPoints: number;
-    flowBonus: number;
-    streakMultiplier: number;
-  };
-}
+import { MetricsUpdate } from '@/types/metrics';
 
 export default function PlayScreen() {
   const router = useRouter();

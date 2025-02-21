@@ -1,3 +1,5 @@
+import { smoothnessMetrics } from '@/types/metrics';
+
 export class SmoothnessCalculator {
   calculateSmoothnessScore(timeGaps: number[]) {
     console.log('SmoothnessCalculator input timeGaps:', timeGaps);
