@@ -62,4 +62,22 @@ export const commonStyles = StyleSheet.create({
     fontSize: 14,
     flex: 1,
   },
+  controlButton: {
+    backgroundColor: '#3498db',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  controlButtonDisabled: {
+    backgroundColor: 'rgba(102,102,102,0.5)',
+  },
+  playPauseButton: {
+    backgroundColor: '#2ecc71',
+  },
 });

@@ -9,6 +9,7 @@ import { SessionHistory } from '@/components/SessionHistory';
 import { useSession } from '@/contexts/SessionContext';
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { commonStyles } from '@/styles/commonStyles';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -20,7 +21,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView style={commonStyles.container}>
       <HelloWave />
       <ThemedText type="title" style={styles.title}>Non-Idle Clicker</ThemedText>
       
@@ -32,12 +33,12 @@ export default function HomeScreen() {
       ) : (
         <>
           <TouchableOpacity 
-            style={styles.newSessionButton} 
+            style={commonStyles.newSessionButton} 
             onPress={handleStartNewSession}
           >
-            <View style={styles.buttonContent}>
+            <View style={commonStyles.buttonContent}>
               <IconSymbol name="play.circle.fill" size={24} color="#fff" />
-              <ThemedText style={styles.buttonText}>Start New Session</ThemedText>
+              <ThemedText style={commonStyles.buttonText}>Start New Session</ThemedText>
             </View>
           </TouchableOpacity>
 
@@ -55,10 +56,6 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
   title: {
     fontSize: 24,
     textAlign: 'center',
@@ -73,28 +70,6 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     color: '#687076',
-  },
-  newSessionButton: {
-    backgroundColor: '#3498db',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 20,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
   },
   historyContainer: {
     flex: 1,
