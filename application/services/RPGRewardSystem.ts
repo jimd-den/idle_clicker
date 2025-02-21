@@ -1,3 +1,5 @@
+import { rewards } from '@/types/metrics';
+
 export class RPGRewardSystem {
   calculateRewards(smoothnessMetrics: {
     consistency: number;

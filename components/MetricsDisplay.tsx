@@ -3,6 +3,7 @@ import { View, StyleSheet, Platform } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { formatTime } from '@/utils/timeUtils';
 import { IconSymbol } from './ui/IconSymbol';
+import { MetricsUpdate } from '@/types/metrics';
 
 interface MetricsDisplayProps {
   clicks: number;

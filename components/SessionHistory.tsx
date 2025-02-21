@@ -4,6 +4,7 @@ import { ThemedText } from './ThemedText';
 import { Session } from '@/domain/entities/Session';
 import { formatTime } from '@/utils/timeUtils';
 import { IconSymbol } from './ui/IconSymbol';
+import { MetricsUpdate } from '@/types/metrics';
 
 interface SessionHistoryProps {
   sessions: Session[];

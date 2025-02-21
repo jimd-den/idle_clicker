@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { WorkSession } from '@/domain/entities/WorkSession';
 import { WorkTimerServiceImpl } from '@/infrastructure/services/WorkTimerServiceImpl';
 import { SmoothnessCalculator } from '@/application/services/SmoothnessCalculator';
@@ -8,10 +8,10 @@ const WorkSessionContext = createContext<WorkSession | null>(null);
 const WorkTimerServiceContext = createContext<WorkTimerServiceImpl | null>(null);
 
 export function WorkSessionProvider({ children }: { children: React.ReactNode }) {
-  const workSession = new WorkSession();
-  const smoothnessCalculator = new SmoothnessCalculator();
-  const rpgRewardSystem = new RPGRewardSystem();
-  const workTimerService = new WorkTimerServiceImpl();
+  const [workSession] = useState(new WorkSession());
+  const [smoothnessCalculator] = useState(new SmoothnessCalculator());
+  const [rpgRewardSystem] = useState(new RPGRewardSystem());
+  const [workTimerService] = useState(new WorkTimerServiceImpl());
 
   return (
     <WorkSessionContext.Provider value={workSession}>

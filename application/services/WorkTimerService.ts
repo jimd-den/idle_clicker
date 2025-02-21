@@ -18,26 +18,7 @@ import { ResetSessionUseCase } from '@/domain/use_cases/ResetSessionUseCase';
 import { TimerService } from '@/application/ports/TimerService';
 import { SmoothnessCalculator } from './SmoothnessCalculator';
 import { RPGRewardSystem } from './RPGRewardSystem';
-
-export interface MetricsUpdate {
-  elapsedTimeMs: number;
-  upm: number;
-  isRunning: boolean;
-  clicks: number;
-  smoothnessMetrics: {
-    consistency: number;
-    rhythm: number;
-    flowState: number;
-    criticalSuccess: number;
-    criticalFailure: number;
-  };
-  rewards: {
-    experience: number;
-    achievementPoints: number;
-    flowBonus: number;
-    streakMultiplier: number;
-  };
-}
+import { MetricsUpdate } from '@/types/metrics';
 
 export interface WorkTimerService {
   startTimer(): boolean;
