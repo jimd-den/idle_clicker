@@ -24,6 +24,28 @@ interface MetricsUpdate { // Define interface for metrics update
   clicks: number;     // ADD clicks to metrics
 }
 
+class SmoothnessMetricService {
+  calculateSmoothnessIndex(session: WorkSession): number {
+    const timeGaps = this.calculateTimeGaps(session.units);
+    const stdDev = this.calculateStandardDeviation(timeGaps);
+    return Math.max(0, 100 - (stdDev / session.sessionMetrics.averageBatchSize * 100));
+  }
+
+  private calculateTimeGaps(units: Array<{ timestamp: Date }>): number[] {
+    const timeGaps: number[] = [];
+    for (let i = 1; i < units.length; i++) {
+      const gap = units[i].timestamp.getTime() - units[i - 1].timestamp.getTime();
+      timeGaps.push(gap);
+    }
+    return timeGaps;
+  }
+
+  private calculateStandardDeviation(timeGaps: number[]): number {
+    const mean = timeGaps.reduce((a, b) => a + b, 0) / timeGaps.length;
+    const variance = timeGaps.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / timeGaps.length;
+    return Math.sqrt(variance);
+  }
+}
 
 export class WorkTimerService {
   private workSession: WorkSession; // Now expects WorkSession to be injected

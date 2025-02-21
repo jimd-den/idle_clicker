@@ -34,6 +34,10 @@ export default function PlayScreen() {
   const [noteText, setNoteText] = useState(''); // State for note input
   const [notes, setNotes] = useState<Array<{ timestamp: string, text: string }>>([]); // State for notes array
 
+  const [currentSession, setCurrentSession] = useState<WorkSession | null>(null);
+  const [beforeImage, setBeforeImage] = useState<string | null>(null);
+  const [afterImage, setAfterImage] = useState<string | null>(null);
+  const [batchSize, setBatchSize] = useState(1);
 
   // --- Styling ---
   const timerColor = useThemeColor({}, 'tint');
@@ -169,6 +173,44 @@ export default function PlayScreen() {
   // --- Render ---
   return (
     <View style={styles.container}>
+      {!currentSession ? (
+        <SessionSetup 
+          onStartSession={(image) => {
+            setBeforeImage(image);
+            startNewSession();
+          }}
+        />
+      ) : (
+        <>
+          <MetricsDisplay 
+            smoothnessIndex={metrics.smoothnessIndex}
+            totalUnits={metrics.totalUnits}
+            batchSize={batchSize}
+          />
+          
+          <BatchControls
+            value={batchSize}
+            onValueChange={setBatchSize}
+          />
+          
+          <TouchableOpacity
+            onPress={() => logUnits(batchSize)}
+            style={styles.logButton}
+          >
+            <Text>Log {batchSize} Units</Text>
+          </TouchableOpacity>
+          
+          <AndonButton
+            onPress={() => showAndonDialog()}
+            style={styles.andonButton}
+          />
+          
+          <SessionControls
+            onPause={handlePause}
+            onEnd={() => endSession(afterImage)}
+          />
+        </>
+      )}
       {/* Top Module: Performance Metrics Display */}
       <MetricsDisplay clicks={metrics.clicks} elapsedTimeMs={metrics.elapsedTimeMs} upm={metrics.upm} /> {/* Pass metrics from state */}
 
