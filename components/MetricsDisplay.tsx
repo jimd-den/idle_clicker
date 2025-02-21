@@ -8,11 +8,23 @@ interface MetricsDisplayProps {
   clicks: number;
   elapsedTimeMs: number;
   upm: number;
+  smoothnessMetrics: {
+    consistency: number;
+    rhythm: number;
+    flowState: number;
+    criticalSuccess: number;
+    criticalFailure: number;
+  };
+  rewards: {
+    experience: number;
+    achievementPoints: number;
+    flowBonus: number;
+    streakMultiplier: number;
+  };
 }
 
-export function MetricsDisplay({ clicks, elapsedTimeMs, upm }: MetricsDisplayProps) {
+export function MetricsDisplay({ clicks, elapsedTimeMs, upm, smoothnessMetrics, rewards }: MetricsDisplayProps) {
   const displayTime = formatTime(elapsedTimeMs);
-  // Don't show UPM for the first few seconds to avoid jumpiness
   const shouldShowUPM = elapsedTimeMs > 3000;
 
   return (
@@ -43,6 +55,70 @@ export function MetricsDisplay({ clicks, elapsedTimeMs, upm }: MetricsDisplayPro
         </ThemedText>
         <ThemedText style={styles.metricLabel}>UPM</ThemedText>
       </View>
+
+      <View style={styles.metricContainer} accessibilityRole="text">
+        <IconSymbol name="gauge" size={20} color="#687076" />
+        <ThemedText style={styles.metricValue} accessibilityLabel={`Consistency ${smoothnessMetrics.consistency}`}>
+          {smoothnessMetrics.consistency}
+        </ThemedText>
+        <ThemedText style={styles.metricLabel}>Consistency</ThemedText>
+      </View>
+
+      <View style={styles.metricContainer} accessibilityRole="text">
+        <IconSymbol name="gauge" size={20} color="#687076" />
+        <ThemedText style={styles.metricValue} accessibilityLabel={`Rhythm ${smoothnessMetrics.rhythm}`}>
+          {smoothnessMetrics.rhythm}
+        </ThemedText>
+        <ThemedText style={styles.metricLabel}>Rhythm</ThemedText>
+      </View>
+
+      <View style={styles.metricContainer} accessibilityRole="text">
+        <IconSymbol name="gauge" size={20} color="#687076" />
+        <ThemedText style={styles.metricValue} accessibilityLabel={`Flow State ${smoothnessMetrics.flowState}`}>
+          {smoothnessMetrics.flowState}
+        </ThemedText>
+        <ThemedText style={styles.metricLabel}>Flow State</ThemedText>
+      </View>
+
+      <View style={styles.metricContainer} accessibilityRole="text">
+        <IconSymbol name="gauge" size={20} color="#687076" />
+        <ThemedText style={styles.metricValue} accessibilityLabel={`Critical Success ${smoothnessMetrics.criticalSuccess}`}>
+          {smoothnessMetrics.criticalSuccess}
+        </ThemedText>
+        <ThemedText style={styles.metricLabel}>Critical Success</ThemedText>
+      </View>
+
+      <View style={styles.metricContainer} accessibilityRole="text">
+        <IconSymbol name="gauge" size={20} color="#687076" />
+        <ThemedText style={styles.metricValue} accessibilityLabel={`Critical Failure ${smoothnessMetrics.criticalFailure}`}>
+          {smoothnessMetrics.criticalFailure}
+        </ThemedText>
+        <ThemedText style={styles.metricLabel}>Critical Failure</ThemedText>
+      </View>
+
+      <View style={styles.metricContainer} accessibilityRole="text">
+        <IconSymbol name="star" size={20} color="#687076" />
+        <ThemedText style={styles.metricValue} accessibilityLabel={`Experience ${rewards.experience}`}>
+          {rewards.experience}
+        </ThemedText>
+        <ThemedText style={styles.metricLabel}>Experience</ThemedText>
+      </View>
+
+      <View style={styles.metricContainer} accessibilityRole="text">
+        <IconSymbol name="star" size={20} color="#687076" />
+        <ThemedText style={styles.metricValue} accessibilityLabel={`Flow Bonus ${rewards.flowBonus}`}>
+          {rewards.flowBonus}
+        </ThemedText>
+        <ThemedText style={styles.metricLabel}>Flow Bonus</ThemedText>
+      </View>
+
+      <View style={styles.metricContainer} accessibilityRole="text">
+        <IconSymbol name="star" size={20} color="#687076" />
+        <ThemedText style={styles.metricValue} accessibilityLabel={`Streak Multiplier ${rewards.streakMultiplier}`}>
+          {rewards.streakMultiplier}
+        </ThemedText>
+        <ThemedText style={styles.metricLabel}>Streak Multiplier</ThemedText>
+      </View>
     </View>
   );
 }
@@ -54,23 +130,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: '5%',
     paddingHorizontal: 8,
-    marginTop: Platform.OS === 'ios' ? 50 : 30, // Adjust for different platforms
-    minHeight: 120, // Ensure minimum height for content
+    marginTop: Platform.OS === 'ios' ? 50 : 30,
+    minHeight: 120,
   },
   metricContainer: {
     alignItems: 'center',
     flex: 1,
     paddingHorizontal: 4,
     paddingVertical: 8,
-    minWidth: 80, // Ensure minimum width for content
+    minWidth: 80,
   },
   metricValue: {
-    fontSize: 24, // More conservative base font size
+    fontSize: 24,
     fontWeight: '600',
     textAlign: 'center',
     marginVertical: 4,
-    includeFontPadding: false, // Prevent Android font padding issues
-    textAlignVertical: 'center', // Better vertical alignment
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   metricLabel: {
     fontSize: 13,

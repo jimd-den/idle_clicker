@@ -16,14 +16,28 @@ import { PauseTimerUseCase } from '@/domain/use_cases/PauseTimerUseCase';
 import { IncrementClicksUseCase } from '@/domain/use_cases/IncrementClicksUseCase';
 import { ResetSessionUseCase } from '@/domain/use_cases/ResetSessionUseCase';
 import { TimerService } from '@/application/ports/TimerService';
+import { SmoothnessCalculator } from './SmoothnessCalculator';
+import { RPGRewardSystem } from './RPGRewardSystem';
 
 interface MetricsUpdate { // Define interface for metrics update
   elapsedTimeMs: number;
   upm: number;
   isRunning: boolean; // ADD isRunning to metrics
   clicks: number;     // ADD clicks to metrics
+  smoothnessMetrics: {
+    consistency: number;
+    rhythm: number;
+    flowState: number;
+    criticalSuccess: number;
+    criticalFailure: number;
+  };
+  rewards: {
+    experience: number;
+    achievementPoints: number;
+    flowBonus: number;
+    streakMultiplier: number;
+  };
 }
-
 
 export class WorkTimerService {
   private workSession: WorkSession; // Now expects WorkSession to be injected
@@ -32,6 +46,8 @@ export class WorkTimerService {
   private incrementClicksUseCase: IncrementClicksUseCase;
   private resetSessionUseCase: ResetSessionUseCase;
   private timerService: TimerService;
+  private smoothnessCalculator: SmoothnessCalculator;
+  private rpgRewardSystem: RPGRewardSystem;
   private metricsUpdateCallback: ((metrics: MetricsUpdate) => void) | null = null; // Changed callback type
 
   /**
@@ -46,6 +62,8 @@ export class WorkTimerService {
    * @param incrementClicksUseCase - Use case for incrementing clicks.
    * @param resetSessionUseCase - Use case for resetting the session.
    * @param timerService - Infrastructure service for timer operations.
+   * @param smoothnessCalculator - Service for calculating smoothness metrics.
+   * @param rpgRewardSystem - Service for calculating RPG rewards.
    */
   constructor(
     workSession: WorkSession, // Expect WorkSession instance to be passed in
@@ -53,7 +71,9 @@ export class WorkTimerService {
     pauseTimerUseCase: PauseTimerUseCase,
     incrementClicksUseCase: IncrementClicksUseCase,
     resetSessionUseCase: ResetSessionUseCase,
-    timerService: TimerService
+    timerService: TimerService,
+    smoothnessCalculator: SmoothnessCalculator,
+    rpgRewardSystem: RPGRewardSystem
   ) {
     this.workSession = workSession; // Use the injected WorkSession instance
     this.startTimerUseCase = startTimerUseCase;
@@ -61,6 +81,8 @@ export class WorkTimerService {
     this.incrementClicksUseCase = incrementClicksUseCase;
     this.resetSessionUseCase = resetSessionUseCase;
     this.timerService = timerService;
+    this.smoothnessCalculator = smoothnessCalculator;
+    this.rpgRewardSystem = rpgRewardSystem;
 
     console.log("WorkTimerService: constructor - WorkTimerService instance injected:", this.workSession); // ADDED LOG
 
@@ -69,7 +91,23 @@ export class WorkTimerService {
       const upm = this.calculateUPM(elapsedTimeMs, this.workSession.getClicks());
       const isRunning = this.workSession.isRunning(); // Get isRunning from WorkSession
       const clicks = this.workSession.getClicks();     // Get clicks from WorkSession
-      const metrics: MetricsUpdate = { elapsedTimeMs, upm, isRunning, clicks }; // Create metrics object with isRunning and clicks
+
+      // Calculate smoothness metrics
+      const smoothnessMetrics = this.smoothnessCalculator.calculateSmoothnessScore([/* timeGaps */]);
+      this.workSession.updateSmoothnessMetrics(smoothnessMetrics);
+
+      // Calculate rewards
+      const rewards = this.rpgRewardSystem.calculateRewards(smoothnessMetrics);
+      this.workSession.updateRewards(rewards);
+
+      const metrics: MetricsUpdate = { 
+        elapsedTimeMs, 
+        upm, 
+        isRunning, 
+        clicks, 
+        smoothnessMetrics: this.workSession.getSmoothnessMetrics(), 
+        rewards: this.workSession.getRewards() 
+      }; // Create metrics object with isRunning and clicks
       console.log("WorkTimerService: onTimeUpdate callback - metrics:", metrics); // ADDED LOG
       // Notify listeners in the presentation layer with combined metrics update
       if (this.metricsUpdateCallback) {
@@ -77,7 +115,6 @@ export class WorkTimerService {
       }
     });
   }
-
 
   onMetricsUpdate(callback: (metrics: MetricsUpdate) => void) { // Changed callback type
     this.metricsUpdateCallback = callback;
@@ -115,7 +152,20 @@ export class WorkTimerService {
       isRunning: false,
       elapsedTimeMs: 0,
       upm: 0,
-      clicks: 0
+      clicks: 0,
+      smoothnessMetrics: {
+        consistency: 0,
+        rhythm: 0,
+        flowState: 0,
+        criticalSuccess: 0,
+        criticalFailure: 0
+      },
+      rewards: {
+        experience: 0,
+        achievementPoints: 0,
+        flowBonus: 0,
+        streakMultiplier: 0
+      }
     };
   }
 
@@ -134,6 +184,24 @@ export class WorkTimerService {
     return this.workSession.getClicks();
   }
 
+  getSmoothnessMetrics(): {
+    consistency: number;
+    rhythm: number;
+    flowState: number;
+    criticalSuccess: number;
+    criticalFailure: number;
+  } {
+    return this.workSession.getSmoothnessMetrics();
+  }
+
+  getRewards(): {
+    experience: number;
+    achievementPoints: number;
+    flowBonus: number;
+    streakMultiplier: number;
+  } {
+    return this.workSession.getRewards();
+  }
 
   private calculateUPM(elapsedTimeMs: number, clicks: number): number { // UPM calculation method
     let currentUPM = 0;

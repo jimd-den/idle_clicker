@@ -7,7 +7,8 @@ import { PauseTimerUseCase } from '@/domain/use_cases/PauseTimerUseCase';
 import { IncrementClicksUseCase } from '@/domain/use_cases/IncrementClicksUseCase';
 import { ResetSessionUseCase } from '@/domain/use_cases/ResetSessionUseCase';
 import { TimerService } from '@/application/ports/TimerService'; // Import TimerService port
-
+import { SmoothnessCalculator } from '@/application/services/SmoothnessCalculator'; // Import SmoothnessCalculator
+import { RPGRewardSystem } from '@/application/services/RPGRewardSystem'; // Import RPGRewardSystem
 
 interface WorkSessionContextProps {
   workSession: WorkSession;
@@ -23,6 +24,8 @@ export const WorkSessionProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const workSessionRef = useRef<WorkSession | null>(null);
   const timerServiceImplRef = useRef<TimerService | null>(null); // Ref for TimerServiceImpl
   const workTimerServiceRef = useRef<WorkTimerService | null>(null); // Ref for WorkTimerService
+  const smoothnessCalculatorRef = useRef<SmoothnessCalculator | null>(null); // Ref for SmoothnessCalculator
+  const rpgRewardSystemRef = useRef<RPGRewardSystem | null>(null); // Ref for RPGRewardSystem
 
   if (!workSessionRef.current) {
     workSessionRef.current = new WorkSession();
@@ -33,6 +36,16 @@ export const WorkSessionProvider: React.FC<{ children: React.ReactNode }> = ({ c
     timerServiceImplRef.current = new TimerServiceImpl();
   }
   const timerService = timerServiceImplRef.current;
+
+  if (!smoothnessCalculatorRef.current) {
+    smoothnessCalculatorRef.current = new SmoothnessCalculator();
+  }
+  const smoothnessCalculator = smoothnessCalculatorRef.current;
+
+  if (!rpgRewardSystemRef.current) {
+    rpgRewardSystemRef.current = new RPGRewardSystem();
+  }
+  const rpgRewardSystem = rpgRewardSystemRef.current;
 
   if (!workTimerServiceRef.current) {
     // Create Use Case instances, injecting the WorkSession
@@ -48,11 +61,12 @@ export const WorkSessionProvider: React.FC<{ children: React.ReactNode }> = ({ c
       pauseTimerUseCase,
       incrementClicksUseCase,
       resetSessionUseCase,
-      timerService // Inject the TimerServiceImpl instance
+      timerService, // Inject the TimerServiceImpl instance
+      smoothnessCalculator, // Inject the SmoothnessCalculator instance
+      rpgRewardSystem // Inject the RPGRewardSystem instance
     );
   }
   const workTimerService = workTimerServiceRef.current;
-
 
   return (
     <WorkSessionContext.Provider value={{ workSession, workTimerService }}> {/* Provide both in context */}
