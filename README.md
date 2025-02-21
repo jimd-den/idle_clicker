@@ -1,8 +1,17 @@
-# Welcome to your Expo app 👋
+# Non-Idle Clicker
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Non-Idle Clicker is a mobile application designed to track work and tasks using principles inspired by Six Sigma and gamified with "Diablo 4 looter shooter mechanics." The application aims to provide a lightweight, local, and efficient way for users to measure their productivity and identify areas for improvement in their workflows.
 
-## Get started
+## Features
+
+- Track work units (clicks) and elapsed time
+- Calculate and display Units Per Minute (UPM)
+- Start, pause, and reset the timer
+- Take timestamped notes during paused periods
+- Local data storage on the user's device
+- Light and dark theme support
+
+## Installation
 
 1. Install dependencies
 
@@ -13,7 +22,7 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 2. Start the app
 
    ```bash
-    npx expo start
+   npx expo start
    ```
 
 In the output, you'll find options to open the app in a
@@ -23,28 +32,89 @@ In the output, you'll find options to open the app in a
 - [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
 - [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Usage
 
-## Get a fresh project
+1. Open the app on your device or simulator.
+2. Press the "Start" button to begin tracking time.
+3. Press the "Click!" button to register work units.
+4. Press the "Pause" button to pause the timer and take notes.
+5. Press the "Reset" button to reset the timer, clicks, and notes.
 
-When you're ready, run:
+## File Structure
 
-```bash
-npm run reset-project
+```plaintext
+.
+├── app
+│   ├── (tabs)
+│   │   ├── _layout.tsx
+│   │   ├── explore.tsx
+│   │   ├── index.tsx
+│   │   └── play.tsx
+│   ├── _layout.tsx
+│   ├── +not-found.tsx
+│   └── contexts
+│       └── WorkSessionContext.tsx
+├── application
+│   ├── ports
+│   │   └── TimerService.ts
+│   ├── services
+│   │   └── WorkTimerService.ts
+│   └── use_cases
+│       ├── IncrementClicksUseCase.ts
+│       ├── PauseTimerUseCase.ts
+│       ├── ResetSessionUseCase.ts
+│       └── StartTimerUseCase.ts
+├── components
+│   ├── Collapsible.tsx
+│   ├── ExternalLink.tsx
+│   ├── MetricsDisplay.tsx
+│   ├── TimerControls.tsx
+│   ├── ThemedText.tsx
+│   ├── ThemedView.tsx
+│   └── ui
+│       └── IconSymbol.tsx
+├── constants
+│   └── Colors.ts
+├── domain
+│   └── entities
+│       └── WorkSession.ts
+├── docs
+│   ├── clean_architecture_plan.md
+│   └── srs.md
+├── hooks
+│   ├── useColorScheme.ts
+│   ├── useColorScheme.web.ts
+│   └── useThemeColor.ts
+├── infrastructure
+│   └── TimerServiceImpl.ts
+├── presentation
+│   └── controllers
+│       └── PlayScreenController.ts
+├── utils
+│   └── timeUtils.ts
+├── .gitignore
+├── app.json
+├── package.json
+├── README.md
+└── tsconfig.json
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Contribution Guidelines
 
-## Learn more
+We welcome contributions from the community! To contribute to Non-Idle Clicker, please follow these guidelines:
 
-To learn more about developing your project with Expo, look at the following resources:
+1. Fork the repository and create a new branch for your feature or bugfix.
+2. Write clear, concise commit messages and follow the existing code style.
+3. Ensure your code passes all tests and linting checks.
+4. Submit a pull request with a detailed description of your changes.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## License
 
-## Join the community
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-Join our community of developers creating universal apps.
+## Contact
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+For questions or support, please reach out to us through the following channels:
+
+- [GitHub Issues](https://github.com/jimd-den/idle_clicker/issues)
+- [Discord Community](https://chat.expo.dev)
