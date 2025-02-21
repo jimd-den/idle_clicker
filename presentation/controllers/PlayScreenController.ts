@@ -38,13 +38,6 @@ export class PlayScreenController {
   private workTimerService: WorkTimerService; // Now depends on WorkTimerService, injected
   private workSessionInstance: WorkSession; // Keep track of WorkSession instance
   private metricsUpdateCallback: ((metrics: MetricsUpdate) => void) | null = null; // Changed to MetricsUpdate callback
-  private elapsedTimeUpdateCallback: ((elapsedTimeMs: number) => void) | null = null; // REMOVE separate elapsedTime callback
-  private upmUpdateCallback: ((upm: number) => void) | null = null; // REMOVE separate UPM callback
-  private isRunningUpdateCallback: ((isRunning: boolean) => void) | null = null; // ADD isRunning callback
-  private clicksUpdateCallback: ((clicks: number) => void) | null = null;     // ADD clicks callback
-  private metricsCallback: ((metrics: any) => void) | null = null;
-  private clickTimes: number[] = [];
-  private lastClickTime: number = 0;
 
   /**
    * Constructor for PlayScreenController.
@@ -66,19 +59,6 @@ export class PlayScreenController {
       if (this.metricsUpdateCallback) {
         this.metricsUpdateCallback(metrics); // Forward all metrics update to UI
       }
-      // REMOVE separate callbacks - using combined metrics callback now
-      // if (this.elapsedTimeUpdateCallback) {
-      //   this.elapsedTimeUpdateCallback(Math.floor(elapsedTimeMs)); // Forward elapsed time update to UI, removing decimal places
-      // }
-      // if (this.upmUpdateCallback) {
-      //   this.upmUpdateCallback(upm); // Forward UPM update to UI
-      // }
-      // if (this.isRunningUpdateCallback) {
-      //   this.isRunningUpdateCallback(isRunning); // Forward isRunning update to UI
-      // }
-      // if (this.clicksUpdateCallback) {
-      //   this.clicksUpdateCallback(clicks); // Forward clicks update to UI
-      // }
     });
   }
 
@@ -93,71 +73,9 @@ export class PlayScreenController {
   }
 
   incrementClicks(callback: (clicks: number) => void) {
-    const currentTime = Date.now();
-    this.clickTimes.push(currentTime);
-    
-    // Call the service first to update basic metrics
+    // Simply call the service method and let the metrics flow through the update callback
     this.workTimerService.incrementClicks();
-    
-    // Calculate smoothness metrics
-    const consistency = this.calculateConsistency();
-    const rhythm = this.calculateRhythm();
-    const flowState = (consistency + rhythm) / 2;
-
-    // Get current metrics from service
-    const currentMetrics = this.workTimerService.getCurrentMetrics();
-
-    // Combine service metrics with smoothness metrics
-    if (this.metricsUpdateCallback) {
-      this.metricsUpdateCallback({
-        ...currentMetrics,
-        smoothnessMetrics: {
-          consistency,
-          rhythm,
-          flowState,
-          criticalSuccess: flowState > 90 ? 1 : 0,
-          criticalFailure: flowState < 10 ? 1 : 0
-        }
-      });
-    }
-
-    this.lastClickTime = currentTime;
-    callback(currentMetrics.clicks);
-  }
-
-  private calculateConsistency(): number {
-    if (this.clickTimes.length < 2) return 0;
-    
-    const intervals = [];
-    for (let i = 1; i < this.clickTimes.length; i++) {
-      intervals.push(this.clickTimes[i] - this.clickTimes[i-1]);
-    }
-
-    const avg = intervals.reduce((a, b) => a + b) / intervals.length;
-    const variance = intervals.reduce((acc, val) => acc + Math.pow(val - avg, 2), 0) / intervals.length;
-    const stdDev = Math.sqrt(variance);
-
-    // Convert to a 0-100 scale, where lower variance = higher consistency
-    return Math.max(0, Math.min(100, 100 - (stdDev / avg * 50)));
-  }
-
-  private calculateRhythm(): number {
-    if (this.clickTimes.length < 3) return 0;
-    
-    const intervals = [];
-    for (let i = 1; i < this.clickTimes.length; i++) {
-      intervals.push(this.clickTimes[i] - this.clickTimes[i-1]);
-    }
-
-    // Check if intervals follow a pattern
-    let rhythmScore = 0;
-    for (let i = 1; i < intervals.length; i++) {
-      const ratio = intervals[i] / intervals[i-1];
-      // Score based on how close the ratio is to 1 (perfect rhythm)
-      rhythmScore += 100 - Math.min(100, Math.abs(ratio - 1) * 100);
-    }
-
-    return rhythmScore / (intervals.length - 1);
+    callback(this.workTimerService.getClicks());
   }
 
   resetSession(): MetricsUpdate { // Modified to return MetricsUpdate
@@ -190,45 +108,4 @@ export class PlayScreenController {
     console.log("PlayScreenController: clearMetricsUpdateCallback() called");
     this.metricsUpdateCallback = null;
   }
-
-  // REMOVE separate callbacks - using combined metrics callback now
-  // onElapsedTimeUpdate(callback: (elapsedTimeMs: number) => void) {
-  //   console.log("PlayScreenController: onElapsedTimeUpdate() setting callback");
-  //   this.elapsedTimeUpdateCallback = callback;
-  // }
-
-  // clearElapsedTimeUpdateCallback() {
-  //   console.log("PlayScreenController: clearElapsedTimeUpdateCallback() called");
-  //   this.elapsedTimeUpdateCallback = null;
-  // }
-
-  // onUPMUpdate(callback: (upm: number) => void) {
-  //   console.log("PlayScreenController: onUPMUpdate() setting callback");
-  //   this.upmUpdateCallback = callback;
-  // }
-
-  // clearUPMUpdateCallback() {
-  //   console.log("PlayScreenController: clearUPMUpdateCallback() called");
-  //   this.upmUpdateCallback = null;
-  // }
-
-  // onIsRunningUpdate(callback: (isRunning: boolean) => void) {
-  //   console.log("PlayScreenController: onIsRunningUpdate() setting callback");
-  //   this.isRunningUpdateCallback = callback;
-  // }
-
-  // clearIsRunningUpdateCallback() {
-  //   console.log("PlayScreenController: clearIsRunningUpdateCallback() called");
-  //   this.isRunningUpdateCallback = null;
-  // }
-
-  // onClicksUpdate(callback: (clicks: number) => void) {
-  //   console.log("PlayScreenController: onClicksUpdate() setting callback");
-  //   this.clicksUpdateCallback = callback;
-  // }
-
-  // clearClicksUpdateCallback() {
-  //   console.log("PlayScreenController: clearClicksUpdateCallback() called");
-  //   this.clicksUpdateCallback = null;
-  // }
 }

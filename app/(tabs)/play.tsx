@@ -18,6 +18,19 @@ interface MetricsUpdate {
   upm: number;
   isRunning: boolean;
   clicks: number;
+  smoothnessMetrics: {
+    consistency: number;
+    rhythm: number;
+    flowState: number;
+    criticalSuccess: number;
+    criticalFailure: number;
+  };
+  rewards: {
+    experience: number;
+    achievementPoints: number;
+    flowBonus: number;
+    streakMultiplier: number;
+  };
 }
 
 export default function PlayScreen() {
@@ -26,7 +39,20 @@ export default function PlayScreen() {
     elapsedTimeMs: 0,
     upm: 0,
     isRunning: false,
-    clicks: 0
+    clicks: 0,
+    smoothnessMetrics: {
+      consistency: 0,
+      rhythm: 0,
+      flowState: 0,
+      criticalSuccess: 0,
+      criticalFailure: 0
+    },
+    rewards: {
+      experience: 0,
+      achievementPoints: 0,
+      flowBonus: 0,
+      streakMultiplier: 0
+    }
   });
   const [noteText, setNoteText] = useState('');
   const [notes, setNotes] = useState<Array<{ timestamp: string, text: string }>>([]);
@@ -139,7 +165,9 @@ export default function PlayScreen() {
           <MetricsDisplay 
             clicks={metrics.clicks} 
             elapsedTimeMs={metrics.elapsedTimeMs} 
-            upm={metrics.upm} 
+            upm={metrics.upm}
+            smoothnessMetrics={metrics.smoothnessMetrics}
+            rewards={metrics.rewards}
           />
         </View>
 
