@@ -68,16 +68,17 @@ export default function PlayScreen() {
   useEffect(() => {
     controllerRef.current = new PlayScreenController(workSession, workTimerService);
     
-    // Initialize metrics and reset session
-    const resetMetrics = controllerRef.current.resetSession();
-    setMetrics(resetMetrics);
-    setNotes([]);
-
-    // Set up metrics update subscription
+    // Set up metrics update subscription first
     const currentController = controllerRef.current;
     currentController.onMetricsUpdate((updatedMetrics) => {
-      setMetrics(updatedMetrics);
+      console.log('Metrics update received:', updatedMetrics);
+      setMetrics(updatedMetrics); // Update all metrics at once
     });
+    
+    // Then initialize metrics and reset session
+    const resetMetrics = currentController.resetSession();
+    setMetrics(resetMetrics);
+    setNotes([]);
 
     // Cleanup
     return () => {
@@ -109,9 +110,10 @@ export default function PlayScreen() {
   // --- Event Handlers ---
   const handleIncrementClick = useCallback(() => {
     if (controllerRef.current && metrics.isRunning) {
-      controllerRef.current.incrementClicks((clicks) => 
-        setMetrics(prev => ({ ...prev, clicks }))
-      );
+      controllerRef.current.incrementClicks((clicks) => {
+        // Don't update metrics here since it will come through the metrics update callback
+        console.log('Click registered:', clicks);
+      });
     }
   }, [metrics.isRunning]);
 

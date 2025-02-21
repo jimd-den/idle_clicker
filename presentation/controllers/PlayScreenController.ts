@@ -73,8 +73,15 @@ export class PlayScreenController {
   }
 
   incrementClicks(callback: (clicks: number) => void) {
-    // Simply call the service method and let the metrics flow through the update callback
+    // Simply call the service method
     this.workTimerService.incrementClicks();
+    
+    // Get full metrics update and pass to UI
+    if (this.metricsUpdateCallback) {
+      this.metricsUpdateCallback(this.workTimerService.getCurrentMetrics());
+    }
+    
+    // Update click count specifically
     callback(this.workTimerService.getClicks());
   }
 
