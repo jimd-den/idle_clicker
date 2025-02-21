@@ -19,11 +19,11 @@ import { TimerService } from '@/application/ports/TimerService';
 import { SmoothnessCalculator } from './SmoothnessCalculator';
 import { RPGRewardSystem } from './RPGRewardSystem';
 
-interface MetricsUpdate { // Define interface for metrics update
+export interface MetricsUpdate {
   elapsedTimeMs: number;
   upm: number;
-  isRunning: boolean; // ADD isRunning to metrics
-  clicks: number;     // ADD clicks to metrics
+  isRunning: boolean;
+  clicks: number;
   smoothnessMetrics: {
     consistency: number;
     rhythm: number;
@@ -39,7 +39,19 @@ interface MetricsUpdate { // Define interface for metrics update
   };
 }
 
-export class WorkTimerService {
+export interface WorkTimerService {
+  startTimer(): boolean;
+  pauseTimer(): boolean;
+  resetSession(): MetricsUpdate;
+  incrementClicks(): void;
+  isRunning(): boolean;
+  getElapsedTimeMs(): number;
+  getClicks(): number;
+  getCurrentMetrics(): MetricsUpdate;
+  onMetricsUpdate(callback: (metrics: MetricsUpdate) => void): void;
+}
+
+export class WorkTimerServiceImpl implements WorkTimerService {
   private workSession: WorkSession; // Now expects WorkSession to be injected
   private startTimerUseCase: StartTimerUseCase;
   private pauseTimerUseCase: PauseTimerUseCase;
@@ -49,6 +61,7 @@ export class WorkTimerService {
   private smoothnessCalculator: SmoothnessCalculator;
   private rpgRewardSystem: RPGRewardSystem;
   private metricsUpdateCallback: ((metrics: MetricsUpdate) => void) | null = null; // Changed callback type
+  private clickTimes: number[] = []; // Add array to store click times
 
   /**
    * Constructor for WorkTimerService.
@@ -87,31 +100,31 @@ export class WorkTimerService {
     console.log("WorkTimerService: constructor - WorkTimerService instance injected:", this.workSession); // ADDED LOG
 
     this.timerService.onTimeUpdate((elapsedTimeMs) => {
-      // Calculate UPM here in the Application Layer
       const upm = this.calculateUPM(elapsedTimeMs, this.workSession.getClicks());
-      const isRunning = this.workSession.isRunning(); // Get isRunning from WorkSession
-      const clicks = this.workSession.getClicks();     // Get clicks from WorkSession
+      const isRunning = this.workSession.isRunning();
+      const clicks = this.workSession.getClicks();
 
-      // Calculate smoothness metrics
-      const smoothnessMetrics = this.smoothnessCalculator.calculateSmoothnessScore([/* timeGaps */]);
-      this.workSession.updateSmoothnessMetrics(smoothnessMetrics);
+      // Only calculate new smoothness if we have clicks
+      const timeGaps = this.calculateTimeGaps();
+      if (timeGaps.length > 0) {
+        const smoothnessMetrics = this.smoothnessCalculator.calculateSmoothnessScore(timeGaps);
+        this.workSession.updateSmoothnessMetrics(smoothnessMetrics);
+        
+        const rewards = this.rpgRewardSystem.calculateRewards(smoothnessMetrics);
+        this.workSession.updateRewards(rewards);
+      }
 
-      // Calculate rewards
-      const rewards = this.rpgRewardSystem.calculateRewards(smoothnessMetrics);
-      this.workSession.updateRewards(rewards);
+      const metrics: MetricsUpdate = {
+        elapsedTimeMs,
+        upm,
+        isRunning,
+        clicks,
+        smoothnessMetrics: this.workSession.getSmoothnessMetrics(),
+        rewards: this.workSession.getRewards()
+      };
 
-      const metrics: MetricsUpdate = { 
-        elapsedTimeMs, 
-        upm, 
-        isRunning, 
-        clicks, 
-        smoothnessMetrics: this.workSession.getSmoothnessMetrics(), 
-        rewards: this.workSession.getRewards() 
-      }; // Create metrics object with isRunning and clicks
-      console.log("WorkTimerService: onTimeUpdate callback - metrics:", metrics); // ADDED LOG
-      // Notify listeners in the presentation layer with combined metrics update
       if (this.metricsUpdateCallback) {
-        this.metricsUpdateCallback(metrics); // Send combined metrics update
+        this.metricsUpdateCallback(metrics);
       }
     });
   }
@@ -141,13 +154,36 @@ export class WorkTimerService {
   incrementClicks(): void {
     console.log("WorkTimerService: incrementClicks() - WorkSession instance:", this.workSession); // ADDED LOG
     this.incrementClicksUseCase.execute();
-    // UPM is now updated in the onTimeUpdate callback, no need to update it here
+    
+    const currentTime = Date.now();
+    this.clickTimes.push(currentTime);
+    console.log('Click times array:', this.clickTimes);
+    
+    // Keep only last 10 clicks to avoid memory growth
+    if (this.clickTimes.length > 10) {
+      this.clickTimes.shift();
+    }
+    
+    // Calculate new metrics from click times
+    const timeGaps = this.calculateTimeGaps();
+    const smoothnessMetrics = this.smoothnessCalculator.calculateSmoothnessScore(timeGaps);
+    console.log('Calculated smoothness metrics:', smoothnessMetrics);
+    this.workSession.updateSmoothnessMetrics(smoothnessMetrics);
+
+    const rewards = this.rpgRewardSystem.calculateRewards(smoothnessMetrics);
+    this.workSession.updateRewards(rewards);
+
+    // Force a metrics update
+    if (this.metricsUpdateCallback) {
+      this.metricsUpdateCallback(this.getCurrentMetrics());
+    }
   }
 
   resetSession(): MetricsUpdate { // Modified to return MetricsUpdate
     console.log("WorkTimerService: resetSession() - WorkSession instance:", this.workSession); // ADDED LOG
     this.resetSessionUseCase.execute(true); // Execute ResetSessionUseCase, pass autoStart=true
     // No need to call timerService.reset() or timerService.start() here, it's handled in the use case or WorkSession
+    this.clickTimes = []; // Reset click times array
     return { // Return reset state
       isRunning: false,
       elapsedTimeMs: 0,
@@ -209,6 +245,26 @@ export class WorkTimerService {
       currentUPM = Math.round((clicks / (elapsedTimeMs / 60000)) * 10) / 10;
     }
     return currentUPM;
+  }
+
+  private calculateTimeGaps(): number[] {
+    const timeGaps = [];
+    for (let i = 1; i < this.clickTimes.length; i++) {
+      timeGaps.push(this.clickTimes[i] - this.clickTimes[i-1]);
+    }
+    console.log('Calculated time gaps:', timeGaps);
+    return timeGaps;
+  }
+
+  getCurrentMetrics(): MetricsUpdate {
+    return {
+      elapsedTimeMs: this.getElapsedTimeMs(),
+      upm: this.calculateUPM(this.getElapsedTimeMs(), this.getClicks()),
+      isRunning: this.isRunning(),
+      clicks: this.getClicks(),
+      smoothnessMetrics: this.getSmoothnessMetrics(),
+      rewards: this.getRewards()
+    };
   }
 
   // No longer need separate onElapsedTimeUpdate and onUPMUpdate, using combined onMetricsUpdate

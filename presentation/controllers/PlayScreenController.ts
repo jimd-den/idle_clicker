@@ -3,6 +3,8 @@
  */
 
 interface MetricsUpdate {
+  smoothnessMetrics: { consistency: number; rhythm: number; flowState: number; criticalSuccess: number; criticalFailure: number; };
+  rewards: { experience: number; achievementPoints: number; flowBonus: number; streakMultiplier: number; };
   elapsedTimeMs: number;
   upm: number;
   isRunning: boolean;
@@ -40,7 +42,9 @@ export class PlayScreenController {
   private upmUpdateCallback: ((upm: number) => void) | null = null; // REMOVE separate UPM callback
   private isRunningUpdateCallback: ((isRunning: boolean) => void) | null = null; // ADD isRunning callback
   private clicksUpdateCallback: ((clicks: number) => void) | null = null;     // ADD clicks callback
-
+  private metricsCallback: ((metrics: any) => void) | null = null;
+  private clickTimes: number[] = [];
+  private lastClickTime: number = 0;
 
   /**
    * Constructor for PlayScreenController.
@@ -88,11 +92,72 @@ export class PlayScreenController {
     return this.workTimerService.pauseTimer(); // Now just call service method
   }
 
-  incrementClicks(updateClicksUI: (clicks: number) => void): void { // Added callback parameter - but not really needed anymore
-    console.log("PlayScreenController: incrementClicks() - WorkSession instance:", this.workSessionInstance);
-    this.workTimerService.incrementClicks(); // Now just call service method
-    const updatedClicks = this.workTimerService.getClicks(); // Get clicks directly from service
-    updateClicksUI(updatedClicks); // Invoke callback to update UI - still useful for immediate click update
+  incrementClicks(callback: (clicks: number) => void) {
+    const currentTime = Date.now();
+    this.clickTimes.push(currentTime);
+    
+    // Call the service first to update basic metrics
+    this.workTimerService.incrementClicks();
+    
+    // Calculate smoothness metrics
+    const consistency = this.calculateConsistency();
+    const rhythm = this.calculateRhythm();
+    const flowState = (consistency + rhythm) / 2;
+
+    // Get current metrics from service
+    const currentMetrics = this.workTimerService.getCurrentMetrics();
+
+    // Combine service metrics with smoothness metrics
+    if (this.metricsUpdateCallback) {
+      this.metricsUpdateCallback({
+        ...currentMetrics,
+        smoothnessMetrics: {
+          consistency,
+          rhythm,
+          flowState,
+          criticalSuccess: flowState > 90 ? 1 : 0,
+          criticalFailure: flowState < 10 ? 1 : 0
+        }
+      });
+    }
+
+    this.lastClickTime = currentTime;
+    callback(currentMetrics.clicks);
+  }
+
+  private calculateConsistency(): number {
+    if (this.clickTimes.length < 2) return 0;
+    
+    const intervals = [];
+    for (let i = 1; i < this.clickTimes.length; i++) {
+      intervals.push(this.clickTimes[i] - this.clickTimes[i-1]);
+    }
+
+    const avg = intervals.reduce((a, b) => a + b) / intervals.length;
+    const variance = intervals.reduce((acc, val) => acc + Math.pow(val - avg, 2), 0) / intervals.length;
+    const stdDev = Math.sqrt(variance);
+
+    // Convert to a 0-100 scale, where lower variance = higher consistency
+    return Math.max(0, Math.min(100, 100 - (stdDev / avg * 50)));
+  }
+
+  private calculateRhythm(): number {
+    if (this.clickTimes.length < 3) return 0;
+    
+    const intervals = [];
+    for (let i = 1; i < this.clickTimes.length; i++) {
+      intervals.push(this.clickTimes[i] - this.clickTimes[i-1]);
+    }
+
+    // Check if intervals follow a pattern
+    let rhythmScore = 0;
+    for (let i = 1; i < intervals.length; i++) {
+      const ratio = intervals[i] / intervals[i-1];
+      // Score based on how close the ratio is to 1 (perfect rhythm)
+      rhythmScore += 100 - Math.min(100, Math.abs(ratio - 1) * 100);
+    }
+
+    return rhythmScore / (intervals.length - 1);
   }
 
   resetSession(): MetricsUpdate { // Modified to return MetricsUpdate

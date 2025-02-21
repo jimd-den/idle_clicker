@@ -69,14 +69,25 @@ export default function PlayScreen() {
     controllerRef.current = new PlayScreenController(workSession, workTimerService);
     
     // Initialize metrics and reset session
-    const resetMetrics = controllerRef.current.resetSession();
+    const resetMetrics = controllerRef.current.resetSession() as MetricsUpdate;
     setMetrics(resetMetrics);
     setNotes([]);
 
     // Set up metrics update subscription
     const currentController = controllerRef.current;
     currentController.onMetricsUpdate((updatedMetrics) => {
-      setMetrics(updatedMetrics);
+      setMetrics(prevMetrics => ({
+        ...prevMetrics,
+        ...updatedMetrics,
+        smoothnessMetrics: {
+          ...prevMetrics.smoothnessMetrics,
+          ...updatedMetrics.smoothnessMetrics
+        },
+        rewards: {
+          ...prevMetrics.rewards,
+          ...updatedMetrics.rewards
+        }
+      }));
     });
 
     // Cleanup

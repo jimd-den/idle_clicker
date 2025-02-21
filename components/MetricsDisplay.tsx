@@ -23,7 +23,24 @@ interface MetricsDisplayProps {
   };
 }
 
-export function MetricsDisplay({ clicks, elapsedTimeMs, upm, smoothnessMetrics, rewards }: MetricsDisplayProps) {
+export function MetricsDisplay({ 
+  clicks, 
+  elapsedTimeMs, 
+  upm, 
+  smoothnessMetrics = {
+    consistency: 0,
+    rhythm: 0,
+    flowState: 0,
+    criticalSuccess: 0,
+    criticalFailure: 0
+  }, 
+  rewards = {
+    experience: 0,
+    achievementPoints: 0,
+    flowBonus: 0,
+    streakMultiplier: 0
+  } 
+}: MetricsDisplayProps) {
   const displayTime = formatTime(elapsedTimeMs);
   const shouldShowUPM = elapsedTimeMs > 3000;
 
