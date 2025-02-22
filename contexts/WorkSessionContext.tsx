@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { WorkSession } from '@/domain/entities/WorkSession';
 import { WorkTimerServiceImpl } from '@/infrastructure/services/WorkTimerServiceImpl';
 import { SmoothnessCalculator } from '@/application/services/SmoothnessCalculator';
@@ -8,10 +8,35 @@ const WorkSessionContext = createContext<WorkSession | null>(null);
 const WorkTimerServiceContext = createContext<WorkTimerServiceImpl | null>(null);
 
 export function WorkSessionProvider({ children }: { children: React.ReactNode }) {
-  const workSession = new WorkSession();
-  const smoothnessCalculator = new SmoothnessCalculator();
-  const rpgRewardSystem = new RPGRewardSystem();
-  const workTimerService = new WorkTimerServiceImpl();
+  // Create instances in state so they can be updated
+  const [workSession, setWorkSession] = useState(() => new WorkSession());
+  const [workTimerService, setWorkTimerService] = useState(() => {
+    const service = new WorkTimerServiceImpl();
+    // Initialize with required dependencies
+    service.initialize(workSession);
+    return service;
+  });
+
+  // Add method to reset/refresh instances
+  const resetInstances = useCallback(() => {
+    const newWorkSession = new WorkSession();
+    const newWorkTimerService = new WorkTimerServiceImpl();
+    newWorkTimerService.initialize(newWorkSession);
+    setWorkSession(newWorkSession);
+    setWorkTimerService(newWorkTimerService);
+  }, []);
+
+  useEffect(() => {
+    // Listen for session changes
+    const handleSessionChange = () => {
+      resetInstances();
+    };
+    
+    // Clean up on unmount
+    return () => {
+      // Any cleanup if needed
+    };
+  }, [resetInstances]);
 
   return (
     <WorkSessionContext.Provider value={workSession}>

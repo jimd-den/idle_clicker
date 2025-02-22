@@ -93,11 +93,7 @@ export default function PlayScreen() {
     if (controllerRef.current) {
       try {
         setError(null);
-        // First pause the timer if it's running
-        if (metrics.isRunning) {
-          controllerRef.current.pauseTimer();
-        }
-        // End the current session with final metrics, include smoothnessMetrics
+        // End the current session with final metrics
         await endCurrentSession(metrics.clicks, metrics.upm, metrics.smoothnessMetrics);
         // Navigate back to history screen
         router.replace('/');
@@ -107,6 +103,18 @@ export default function PlayScreen() {
     }
   }, [metrics, endCurrentSession, router]);
 
+  const handleStartPause = useCallback(() => {
+    if (controllerRef.current) {
+      if (metrics.isRunning) {
+        controllerRef.current.pauseTimer();
+        setMetrics(prev => ({ ...prev, isRunning: false }));
+      } else {
+        controllerRef.current.startTimer();
+        setMetrics(prev => ({ ...prev, isRunning: true }));
+      }
+    }
+  }, [metrics.isRunning]);
+
   // --- Event Handlers ---
   const handleIncrementClick = useCallback(() => {
     if (controllerRef.current && metrics.isRunning) {
@@ -114,16 +122,6 @@ export default function PlayScreen() {
         // Don't update metrics here since it will come through the metrics update callback
         console.log('Click registered:', clicks);
       });
-    }
-  }, [metrics.isRunning]);
-
-  const handleStartPause = useCallback(() => {
-    if (controllerRef.current) {
-      const isRunning = metrics.isRunning;
-      const updatedIsRunning = isRunning ? 
-        controllerRef.current.pauseTimer() : 
-        controllerRef.current.startTimer();
-      setMetrics(prev => ({ ...prev, isRunning: updatedIsRunning }));
     }
   }, [metrics.isRunning]);
 
@@ -238,9 +236,8 @@ export default function PlayScreen() {
           )}
 
           <TouchableOpacity 
-            style={[styles.endSessionButton, metrics.isRunning && styles.endSessionButtonDisabled]} 
+            style={[styles.endSessionButton]} 
             onPress={handleEndSession}
-            disabled={metrics.isRunning}
             accessibilityLabel="End Session"
           >
             <View style={styles.buttonContent}>

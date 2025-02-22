@@ -137,17 +137,15 @@ export class WorkTimerServiceImpl implements WorkTimerService {
   }
 
   startTimer(): boolean {
-    console.log("WorkTimerService: startTimer() - WorkSession instance:", this.workSession); // ADDED LOG
     this.startTimerUseCase.execute();
     this.timerService.start();
-    return this.isRunning();
+    return true; // Always return true when starting
   }
 
   pauseTimer(): boolean {
-    console.log("WorkTimerService: pauseTimer() - WorkSession instance:", this.workSession); // ADDED LOG
     this.pauseTimerUseCase.execute();
     this.timerService.pause();
-    return this.isRunning();
+    return false; // Always return false when pausing
   }
 
   incrementClicks(): void {

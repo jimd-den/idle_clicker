@@ -9,13 +9,16 @@ import { SessionHistory } from '@/components/SessionHistory';
 import { useSession } from '@/contexts/SessionContext';
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { useWorkTimerService } from '@/contexts/WorkSessionContext';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { getAllSessions, startNewSession, isLoading } = useSession();
+  const workTimerService = useWorkTimerService();
   const sessions = getAllSessions(); // Get sessions explicitly
 
   const handleStartNewSession = () => {
+    workTimerService.resetSession(); // Reset WorkTimerService state before starting new session
     startNewSession();
     router.push('/play');
   };

@@ -2,8 +2,19 @@ import { WorkTimerService } from '@/application/services/WorkTimerService';
 import { MetricsUpdate } from '@/types/metrics';
 import { SmoothnessCalculator } from '@/application/services/SmoothnessCalculator';
 import { RPGRewardSystem } from '@/application/services/RPGRewardSystem';
+import { WorkSession } from '@/domain/entities/WorkSession';
+import { StartTimerUseCase } from '@/domain/use_cases/StartTimerUseCase';
+import { PauseTimerUseCase } from '@/domain/use_cases/PauseTimerUseCase';
+import { IncrementClicksUseCase } from '@/domain/use_cases/IncrementClicksUseCase';
+import { ResetSessionUseCase } from '@/domain/use_cases/ResetSessionUseCase';
 
 export class WorkTimerServiceImpl implements WorkTimerService {
+  private workSession!: WorkSession;
+  private startTimerUseCase!: StartTimerUseCase;
+  private pauseTimerUseCase!: PauseTimerUseCase;
+  private incrementClicksUseCase!: IncrementClicksUseCase;
+  private resetSessionUseCase!: ResetSessionUseCase;
+
   private isTimerRunning: boolean = false;
   private startTime: number = 0;
   private elapsedTime: number = 0;
@@ -70,16 +81,17 @@ export class WorkTimerServiceImpl implements WorkTimerService {
   }
 
   startTimer(): boolean {
+    this.startTimerUseCase.execute();
     if (!this.isTimerRunning) {
       this.startTime = Date.now();
       this.isTimerRunning = true;
       this.startMetricsUpdate();
-      return true;
     }
-    return false;
+    return true;
   }
 
   pauseTimer(): boolean {
+    this.pauseTimerUseCase.execute();
     if (this.isTimerRunning) {
       this.elapsedTime += Date.now() - this.startTime;
       this.isTimerRunning = false;
@@ -87,12 +99,17 @@ export class WorkTimerServiceImpl implements WorkTimerService {
         clearInterval(this.updateInterval);
         this.updateInterval = null;
       }
-      return true;
     }
     return false;
   }
 
-  resetSession(): MetricsUpdate {
+  initialize(workSession: WorkSession): void {
+    this.workSession = workSession;
+    this.startTimerUseCase = new StartTimerUseCase(workSession);
+    this.pauseTimerUseCase = new PauseTimerUseCase(workSession);
+    this.incrementClicksUseCase = new IncrementClicksUseCase(workSession);
+    this.resetSessionUseCase = new ResetSessionUseCase(workSession);
+    // Reset all internal state
     this.isTimerRunning = false;
     this.startTime = 0;
     this.elapsedTime = 0;
@@ -102,6 +119,10 @@ export class WorkTimerServiceImpl implements WorkTimerService {
       clearInterval(this.updateInterval);
       this.updateInterval = null;
     }
+  }
+
+  resetSession(): MetricsUpdate {
+    this.initialize(new WorkSession()); // Create and initialize with new WorkSession
     return this.getCurrentMetricsState();
   }
 
@@ -118,7 +139,8 @@ export class WorkTimerServiceImpl implements WorkTimerService {
   }
 
   isRunning(): boolean {
-    return this.isTimerRunning;
+    // Use WorkSession state instead of local state
+    return this.workSession.isRunning();
   }
 
   getElapsedTimeMs(): number {
