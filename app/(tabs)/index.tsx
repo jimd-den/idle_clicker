@@ -1,30 +1,44 @@
 import { Link } from 'expo-router';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Session } from '@/domain/entities/Session';
 
 import { HelloWave } from '@/components/HelloWave';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { SessionHistory } from '@/components/SessionHistory';
-import { useSession } from '@/contexts/SessionContext';
+import { useSessionService } from '@/infrastructure/contexts/SessionContext';
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import { useWorkTimerService } from '@/contexts/WorkSessionContext';
+import { useWorkTimerService } from '@/infrastructure/contexts/WorkSessionContext';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { getAllSessions, startNewSession, isLoading } = useSession();
+  const { getAllSessions, startNewSession } = useSessionService();
   const workTimerService = useWorkTimerService();
-  const sessions = getAllSessions(); // Get sessions explicitly
+  const [isLoading, setIsLoading] = useState(true);
+  const [sessions, setSessions] = useState<Session[]>([]);
+
+  useEffect(() => {
+    const loadSessions = async () => {
+      try {
+        const loadedSessions = getAllSessions();
+        setSessions(loadedSessions);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadSessions();
+  }, [getAllSessions]);
 
   const handleStartNewSession = () => {
-    workTimerService.resetSession(); // Reset WorkTimerService state before starting new session
+    workTimerService.resetSession();
     startNewSession();
     router.push('/play');
   };
 
   const handleSessionHistoryPress = () => {
-    router.push('./session-history');  // Changed to relative path
+    router.push('./session-history');
   };
 
   return (
@@ -55,7 +69,6 @@ export default function HomeScreen() {
               <ThemedText style={styles.sectionTitle}>Session History</ThemedText>
             </View>
             {sessions && sessions.length > 0 ? (
-              // Remove the TouchableOpacity wrapper, just render SessionHistory directly
               <View style={styles.historyList}>
                 <SessionHistory sessions={sessions} />
               </View>
@@ -117,7 +130,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   historyList: {
-    flex: 1,  // Add this to ensure the list takes up available space
+    flex: 1,
   },
   sectionHeader: {
     flexDirection: 'row',

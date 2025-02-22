@@ -1,5 +1,6 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Session, SessionNote } from '@/domain/entities/Session';
+import { StorageService } from '@/application/ports/StorageService';
+import { TimeService } from '@/application/ports/TimeService';
 
 const SESSIONS_STORAGE_KEY = '@idle_clicker_sessions';
 const CURRENT_SESSION_KEY = '@idle_clicker_current_session';
@@ -9,53 +10,53 @@ export class SessionService {
   private currentSession: Session | null = null;
   private initialized: boolean = false;
 
+  constructor(
+    private readonly storageService: StorageService,
+    private readonly timeService: TimeService
+  ) {}
+
   async initialize(): Promise<void> {
     if (this.initialized) return;
     
     try {
-      // Load saved sessions
-      const storedSessions = await AsyncStorage.getItem(SESSIONS_STORAGE_KEY);
+      const storedSessions = await this.storageService.getItem(SESSIONS_STORAGE_KEY);
       if (storedSessions) {
         const sessionsData = JSON.parse(storedSessions);
         this.sessions = sessionsData.map(Session.fromJSON);
       }
 
-      // Load current session if exists
-      const currentSessionData = await AsyncStorage.getItem(CURRENT_SESSION_KEY);
+      const currentSessionData = await this.storageService.getItem(CURRENT_SESSION_KEY);
       if (currentSessionData) {
         this.currentSession = Session.fromJSON(JSON.parse(currentSessionData));
       }
 
       this.initialized = true;
     } catch (error) {
-      console.error('Failed to initialize SessionService:', error);
-      throw error;
+      throw new Error('Failed to initialize SessionService: ' + error);
     }
   }
 
   private async persistSessions(): Promise<void> {
     try {
       const serializedSessions = this.sessions.map(session => session.toJSON());
-      await AsyncStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(serializedSessions));
+      await this.storageService.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(serializedSessions));
     } catch (error) {
-      console.error('Failed to persist sessions:', error);
-      throw error;
+      throw new Error('Failed to persist sessions: ' + error);
     }
   }
 
   private async persistCurrentSession(): Promise<void> {
     try {
       if (this.currentSession) {
-        await AsyncStorage.setItem(
+        await this.storageService.setItem(
           CURRENT_SESSION_KEY,
           JSON.stringify(this.currentSession.toJSON())
         );
       } else {
-        await AsyncStorage.removeItem(CURRENT_SESSION_KEY);
+        await this.storageService.removeItem(CURRENT_SESSION_KEY);
       }
     } catch (error) {
-      console.error('Failed to persist current session:', error);
-      throw error;
+      throw new Error('Failed to persist current session: ' + error);
     }
   }
 
@@ -64,7 +65,8 @@ export class SessionService {
       throw new Error('Cannot start new session while current session is active');
     }
     
-    this.currentSession = new Session();
+    const currentTime = this.timeService.getCurrentTime();
+    this.currentSession = new Session(String(currentTime), currentTime);
     this.sessions.push(this.currentSession);
     
     await this.persistSessions();
@@ -85,23 +87,19 @@ export class SessionService {
     }
   ): Promise<Session | null> {
     if (this.currentSession && !this.currentSession.isComplete()) {
-      try {
-        this.currentSession.setTotalClicks(clicks);
-        this.currentSession.setFinalUPM(upm);
-        this.currentSession.updateSmoothnessMetrics(smoothnessMetrics);
-        this.currentSession.setEndTime(new Date());
-        
-        const completedSession = this.currentSession;
-        this.currentSession = null;
-        
-        await this.persistSessions();
-        await this.persistCurrentSession();
-        
-        return completedSession;
-      } catch (error) {
-        console.error('Failed to end current session:', error);
-        throw error;
-      }
+      const currentTime = this.timeService.getCurrentTime();
+      this.currentSession.setTotalClicks(clicks);
+      this.currentSession.setFinalUPM(upm);
+      this.currentSession.updateSmoothnessMetrics(smoothnessMetrics);
+      this.currentSession.setEndTime(currentTime);
+      
+      const completedSession = this.currentSession;
+      this.currentSession = null;
+      
+      await this.persistSessions();
+      await this.persistCurrentSession();
+      
+      return completedSession;
     }
     return null;
   }
@@ -111,9 +109,7 @@ export class SessionService {
   }
 
   getAllSessions(): Session[] {
-    return [...this.sessions].sort((a, b) => 
-      b.getStartTime().getTime() - a.getStartTime().getTime()
-    );
+    return [...this.sessions].sort((a, b) => b.getStartTime() - a.getStartTime());
   }
 
   async addNote(note: SessionNote): Promise<void> {
@@ -126,8 +122,7 @@ export class SessionService {
       await this.persistSessions();
       await this.persistCurrentSession();
     } catch (error) {
-      console.error('Failed to add note:', error);
-      throw error;
+      throw new Error('Failed to add note: ' + error);
     }
   }
 }

@@ -8,9 +8,9 @@ import { PlayScreenController } from '@/presentation/controllers/PlayScreenContr
 import { formatTime } from '@/utils/timeUtils';
 import { MetricsDisplay } from '@/components/MetricsDisplay';
 import { TimerControls } from '@/components/TimerControls';
-import { useWorkSession } from '@/contexts/WorkSessionContext';
-import { useWorkTimerService } from '@/contexts/WorkSessionContext';
-import { useSession } from '@/contexts/SessionContext';
+import { useWorkSession } from '@/infrastructure/contexts/WorkSessionContext';
+import { useWorkTimer } from '@/infrastructure/contexts/WorkTimerContext';
+import { useSessionService } from '@/infrastructure/contexts/SessionContext';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 
 interface MetricsUpdate {
@@ -59,21 +59,29 @@ export default function PlayScreen() {
   const [error, setError] = useState<string | null>(null);
   
   const workSession = useWorkSession();
-  const workTimerService = useWorkTimerService();
-  const { endCurrentSession, addNote } = useSession();
+  const workTimer = useWorkTimer();
+  const { endCurrentSession, addNote } = useSessionService();
 
   const controllerRef = useRef<PlayScreenController | null>(null);
 
+  // Memoize the metrics update callback
+  const metricsUpdateCallback = useCallback((updatedMetrics: MetricsUpdate) => {
+    // Only update if the values have actually changed
+    setMetrics(prev => {
+      if (JSON.stringify(prev) === JSON.stringify(updatedMetrics)) {
+        return prev;
+      }
+      return updatedMetrics;
+    });
+  }, []);
+
   // Initialize controller once
   useEffect(() => {
-    controllerRef.current = new PlayScreenController(workSession, workTimerService);
+    controllerRef.current = new PlayScreenController(workSession, workTimer.timerService);
     
     // Set up metrics update subscription first
     const currentController = controllerRef.current;
-    currentController.onMetricsUpdate((updatedMetrics) => {
-      console.log('Metrics update received:', updatedMetrics);
-      setMetrics(updatedMetrics); // Update all metrics at once
-    });
+    currentController.onMetricsUpdate(metricsUpdateCallback);
     
     // Then initialize metrics and reset session
     const resetMetrics = currentController.resetSession();
@@ -87,7 +95,7 @@ export default function PlayScreen() {
         currentController.pauseTimer();
       }
     };
-  }, [workSession, workTimerService]); // Only recreate when core dependencies change
+  }, [workSession, workTimer, metricsUpdateCallback]); // Only recreate when core dependencies change
 
   const handleEndSession = useCallback(async () => {
     if (controllerRef.current) {
@@ -118,10 +126,7 @@ export default function PlayScreen() {
   // --- Event Handlers ---
   const handleIncrementClick = useCallback(() => {
     if (controllerRef.current && metrics.isRunning) {
-      controllerRef.current.incrementClicks((clicks) => {
-        // Don't update metrics here since it will come through the metrics update callback
-        console.log('Click registered:', clicks);
-      });
+      controllerRef.current.incrementClicks();
     }
   }, [metrics.isRunning]);
 

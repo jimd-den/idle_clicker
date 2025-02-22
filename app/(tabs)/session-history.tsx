@@ -3,11 +3,11 @@ import { StyleSheet } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { SessionHistory } from '@/components/SessionHistory';
-import { useSession } from '@/contexts/SessionContext';
+import { useSessionService } from '@/infrastructure/contexts/SessionContext';
 import { Stack } from 'expo-router';
 
 export default function SessionHistoryScreen() {
-  const { getAllSessions } = useSession();
+  const { getAllSessions } = useSessionService();
 
   return (
     <ThemedView style={styles.container}>

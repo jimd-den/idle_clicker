@@ -4,13 +4,13 @@ import { useLocalSearchParams } from 'expo-router';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { MetricsDisplay } from '@/components/MetricsDisplay';
-import { useSession } from '@/contexts/SessionContext';
+import { useSessionService } from '@/infrastructure/contexts/SessionContext';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { formatTime } from '@/utils/timeUtils';
 
 export default function SessionDetailsScreen() {
   const { id } = useLocalSearchParams();
-  const { getAllSessions } = useSession();
+  const { getAllSessions } = useSessionService();
   
   const session = getAllSessions().find(s => s.getId() === id);
   
@@ -29,11 +29,11 @@ export default function SessionDetailsScreen() {
           <View style={styles.dateContainer}>
             <IconSymbol name="clock.fill" size={20} color="#687076" />
             <ThemedText style={styles.date}>
-              {session.getStartTime().toLocaleDateString()}
+              {new Date(session.getStartTime()).toLocaleDateString()}
             </ThemedText>
           </View>
           <ThemedText style={styles.time}>
-            {session.getStartTime().toLocaleTimeString()}
+            {new Date(session.getStartTime()).toLocaleTimeString()}
           </ThemedText>
         </View>
 
@@ -55,7 +55,7 @@ export default function SessionDetailsScreen() {
         {session.getNotes().length > 0 && (
           <View style={styles.notesSection}>
             <View style={styles.sectionHeader}>
-              <IconSymbol name="doc.text.fill" size={20} color="#687076" />
+              <IconSymbol name="info.circle" size={20} color="#687076" />
               <ThemedText style={styles.sectionTitle}>Session Notes</ThemedText>
             </View>
             {session.getNotes().map((note, index) => (

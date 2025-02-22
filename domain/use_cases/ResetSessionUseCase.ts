@@ -2,19 +2,22 @@
  * Domain Layer - Use Cases
  *
  * ResetSessionUseCase: Defines the use case for resetting the work session.
- * It encapsulates the business logic for starting a new work session,
- * clearing all previous data.
- *
- * This use case operates on the WorkSession entity and is
- * independent of UI and infrastructure.
  */
 
 import { WorkSession } from '../entities/WorkSession';
+import { TimeService } from '@/application/ports/TimeService';
 
 export class ResetSessionUseCase {
-  constructor(private workSession: WorkSession) {}
+  constructor(
+    private readonly workSession: WorkSession,
+    private readonly timeService: TimeService
+  ) {}
 
   execute(autoStart: boolean = false): void {
-    this.workSession.reset(autoStart);
+    if (autoStart) {
+      this.workSession.reset(this.timeService.getCurrentTime());
+    } else {
+      this.workSession.reset();
+    }
   }
 }

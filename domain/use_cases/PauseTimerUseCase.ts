@@ -2,18 +2,18 @@
  * Domain Layer - Use Cases
  *
  * PauseTimerUseCase: Defines the use case for pausing the work timer.
- * It encapsulates the business logic for pausing an active work session.
- *
- * This use case operates on the WorkSession entity and is
- * independent of UI and infrastructure.
  */
 
 import { WorkSession } from '../entities/WorkSession';
+import { TimeService } from '@/application/ports/TimeService';
 
 export class PauseTimerUseCase {
-  constructor(private workSession: WorkSession) {}
+  constructor(
+    private readonly workSession: WorkSession,
+    private readonly timeService: TimeService
+  ) {}
 
   execute(): void {
-    this.workSession.pause();
+    this.workSession.pause(this.timeService.getCurrentTime());
   }
 }

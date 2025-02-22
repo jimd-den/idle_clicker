@@ -8,9 +8,9 @@ import { PlayScreenController } from '@/presentation/controllers/PlayScreenContr
 import { formatTime } from '@/utils/timeUtils';
 import { MetricsDisplay } from '@/components/MetricsDisplay';
 import { TimerControls } from '@/components/TimerControls';
-import { useWorkSession } from '@/contexts/WorkSessionContext';
-import { useWorkTimerService } from '@/contexts/WorkSessionContext';
-import { useSession } from '@/contexts/SessionContext';
+import { useWorkSession } from '@/infrastructure/contexts/WorkSessionContext';
+import { useWorkTimer } from '@/infrastructure/contexts/WorkTimerContext';
+import { useSessionService } from '@/infrastructure/contexts/SessionContext';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 
 interface MetricsUpdate {
@@ -59,36 +59,26 @@ export default function PlayScreen() {
   const [error, setError] = useState<string | null>(null);
   
   const workSession = useWorkSession();
-  const workTimerService = useWorkTimerService();
-  const { endCurrentSession, addNote } = useSession();
+  const workTimer = useWorkTimer();
+  const { endCurrentSession, addNote } = useSessionService();
 
   const controllerRef = useRef<PlayScreenController | null>(null);
 
   // Initialize controller once
   useEffect(() => {
-    controllerRef.current = new PlayScreenController(workSession, workTimerService);
+    controllerRef.current = new PlayScreenController(workSession, workTimer.timerService);
     
-    // Initialize metrics and reset session
-    const resetMetrics = controllerRef.current.resetSession() as MetricsUpdate;
-    setMetrics(resetMetrics);
-    setNotes([]);
-
-    // Set up metrics update subscription
+    // Set up metrics update subscription first
     const currentController = controllerRef.current;
     currentController.onMetricsUpdate((updatedMetrics) => {
-      setMetrics(prevMetrics => ({
-        ...prevMetrics,
-        ...updatedMetrics,
-        smoothnessMetrics: {
-          ...prevMetrics.smoothnessMetrics,
-          ...updatedMetrics.smoothnessMetrics
-        },
-        rewards: {
-          ...prevMetrics.rewards,
-          ...updatedMetrics.rewards
-        }
-      }));
+      console.log('Metrics update received:', updatedMetrics);
+      setMetrics(updatedMetrics); // Update all metrics at once
     });
+    
+    // Then initialize metrics and reset session
+    const resetMetrics = currentController.resetSession();
+    setMetrics(resetMetrics);
+    setNotes([]);
 
     // Cleanup
     return () => {
@@ -97,18 +87,14 @@ export default function PlayScreen() {
         currentController.pauseTimer();
       }
     };
-  }, [workSession, workTimerService]); // Only recreate when core dependencies change
+  }, [workSession, workTimer]); // Only recreate when core dependencies change
 
   const handleEndSession = useCallback(async () => {
     if (controllerRef.current) {
       try {
         setError(null);
-        // First pause the timer if it's running
-        if (metrics.isRunning) {
-          controllerRef.current.pauseTimer();
-        }
         // End the current session with final metrics
-        await endCurrentSession(metrics.clicks, metrics.upm);
+        await endCurrentSession(metrics.clicks, metrics.upm, metrics.smoothnessMetrics);
         // Navigate back to history screen
         router.replace('/');
       } catch (err) {
@@ -117,22 +103,22 @@ export default function PlayScreen() {
     }
   }, [metrics, endCurrentSession, router]);
 
-  // --- Event Handlers ---
-  const handleIncrementClick = useCallback(() => {
-    if (controllerRef.current && metrics.isRunning) {
-      controllerRef.current.incrementClicks((clicks) => 
-        setMetrics(prev => ({ ...prev, clicks }))
-      );
+  const handleStartPause = useCallback(() => {
+    if (controllerRef.current) {
+      if (metrics.isRunning) {
+        controllerRef.current.pauseTimer();
+        setMetrics(prev => ({ ...prev, isRunning: false }));
+      } else {
+        controllerRef.current.startTimer();
+        setMetrics(prev => ({ ...prev, isRunning: true }));
+      }
     }
   }, [metrics.isRunning]);
 
-  const handleStartPause = useCallback(() => {
-    if (controllerRef.current) {
-      const isRunning = metrics.isRunning;
-      const updatedIsRunning = isRunning ? 
-        controllerRef.current.pauseTimer() : 
-        controllerRef.current.startTimer();
-      setMetrics(prev => ({ ...prev, isRunning: updatedIsRunning }));
+  // --- Event Handlers ---
+  const handleIncrementClick = useCallback(() => {
+    if (controllerRef.current && metrics.isRunning) {
+      controllerRef.current.incrementClicks();
     }
   }, [metrics.isRunning]);
 
@@ -176,7 +162,7 @@ export default function PlayScreen() {
           <MetricsDisplay 
             clicks={metrics.clicks} 
             elapsedTimeMs={metrics.elapsedTimeMs} 
-            upm={metrics.upm} 
+            upm={metrics.upm}
             smoothnessMetrics={metrics.smoothnessMetrics}
             rewards={metrics.rewards}
           />
@@ -247,9 +233,8 @@ export default function PlayScreen() {
           )}
 
           <TouchableOpacity 
-            style={[styles.endSessionButton, metrics.isRunning && styles.endSessionButtonDisabled]} 
+            style={[styles.endSessionButton]} 
             onPress={handleEndSession}
-            disabled={metrics.isRunning}
             accessibilityLabel="End Session"
           >
             <View style={styles.buttonContent}>
