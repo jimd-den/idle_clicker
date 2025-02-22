@@ -12,12 +12,13 @@ interface SessionHistoryProps {
 
 export function SessionHistory({ sessions }: SessionHistoryProps) {
   const router = useRouter();
+  const validSessions = sessions || []; // Ensure we have an array even if sessions is undefined
 
   const handleSessionPress = (sessionId: string) => {
     router.push(`../session-details/${sessionId}`);  // Changed to relative path
   };
 
-  if (sessions.length === 0) {
+  if (!validSessions.length) {
     return (
       <View style={styles.container}>
         <ThemedText style={styles.emptyText}>No sessions yet. Start a new session to begin tracking!</ThemedText>
@@ -27,7 +28,7 @@ export function SessionHistory({ sessions }: SessionHistoryProps) {
 
   return (
     <ScrollView style={styles.container}>
-      {sessions.map((session) => (
+      {validSessions.map((session) => (
         <TouchableOpacity
           key={session.getId()}
           onPress={() => handleSessionPress(session.getId())}

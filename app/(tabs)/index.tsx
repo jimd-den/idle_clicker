@@ -13,6 +13,7 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 export default function HomeScreen() {
   const router = useRouter();
   const { getAllSessions, startNewSession, isLoading } = useSession();
+  const sessions = getAllSessions(); // Get sessions explicitly
 
   const handleStartNewSession = () => {
     startNewSession();
@@ -50,9 +51,16 @@ export default function HomeScreen() {
               <IconSymbol name="clock.fill" size={20} color="#687076" />
               <ThemedText style={styles.sectionTitle}>Session History</ThemedText>
             </View>
-            <TouchableOpacity onPress={handleSessionHistoryPress}>
-              <SessionHistory sessions={getAllSessions()} />
-            </TouchableOpacity>
+            {sessions && sessions.length > 0 ? (
+              // Remove the TouchableOpacity wrapper, just render SessionHistory directly
+              <View style={styles.historyList}>
+                <SessionHistory sessions={sessions} />
+              </View>
+            ) : (
+              <ThemedText style={styles.emptyText}>
+                No sessions yet. Start a new session to begin tracking!
+              </ThemedText>
+            )}
           </View>
         </>
       )}
@@ -105,6 +113,9 @@ const styles = StyleSheet.create({
   historyContainer: {
     flex: 1,
   },
+  historyList: {
+    flex: 1,  // Add this to ensure the list takes up available space
+  },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -114,5 +125,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
+  },
+  emptyText: {
+    textAlign: 'center',
+    padding: 20,
+    fontSize: 16,
+    color: '#687076',
   },
 });
