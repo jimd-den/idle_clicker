@@ -9,6 +9,7 @@ export class SessionService {
   private sessions: Session[] = [];
   private currentSession: Session | null = null;
   private initialized: boolean = false;
+  private initializationPromise: Promise<void> | null = null;
 
   constructor(
     private readonly storageService: StorageService,
@@ -17,23 +18,57 @@ export class SessionService {
 
   async initialize(): Promise<void> {
     if (this.initialized) return;
+    if (this.initializationPromise) return this.initializationPromise;
     
-    try {
-      const storedSessions = await this.storageService.getItem(SESSIONS_STORAGE_KEY);
-      if (storedSessions) {
-        const sessionsData = JSON.parse(storedSessions);
-        this.sessions = sessionsData.map(Session.fromJSON);
-      }
+    this.initializationPromise = (async () => {
+      try {
+        const storedSessions = await this.storageService.getItem(SESSIONS_STORAGE_KEY);
+        this.sessions = []; // Reset sessions array
+        
+        if (storedSessions) {
+          try {
+            const sessionsData = JSON.parse(storedSessions);
+            if (Array.isArray(sessionsData)) {
+              this.sessions = sessionsData
+                .map(sessionData => {
+                  try {
+                    return Session.fromJSON(sessionData);
+                  } catch (e) {
+                    console.warn('Failed to parse session:', e);
+                    return null;
+                  }
+                })
+                .filter((session): session is Session => session !== null);
+            }
+          } catch (e) {
+            console.error('Failed to parse stored sessions:', e);
+            this.sessions = [];
+          }
+        }
 
-      const currentSessionData = await this.storageService.getItem(CURRENT_SESSION_KEY);
-      if (currentSessionData) {
-        this.currentSession = Session.fromJSON(JSON.parse(currentSessionData));
-      }
+        const currentSessionData = await this.storageService.getItem(CURRENT_SESSION_KEY);
+        if (currentSessionData) {
+          try {
+            const parsedData = JSON.parse(currentSessionData);
+            this.currentSession = Session.fromJSON(parsedData);
+          } catch (e) {
+            console.error('Error parsing current session:', e);
+            this.currentSession = null;
+          }
+        }
 
-      this.initialized = true;
-    } catch (error) {
-      throw new Error('Failed to initialize SessionService: ' + error);
-    }
+        this.initialized = true;
+      } catch (error) {
+        console.error('Failed to initialize SessionService:', error);
+        this.sessions = [];
+        this.currentSession = null;
+        this.initialized = true; // Still mark as initialized to prevent infinite loops
+        throw error; // Re-throw to let caller handle the error
+      }
+    })();
+
+    await this.initializationPromise;
+    this.initializationPromise = null;
   }
 
   private async persistSessions(): Promise<void> {
@@ -109,7 +144,13 @@ export class SessionService {
   }
 
   getAllSessions(): Session[] {
-    return [...this.sessions].sort((a, b) => b.getStartTime() - a.getStartTime());
+    if (!this.initialized) {
+      console.warn('SessionService not initialized. Returning empty array.');
+      return [];
+    }
+    return [...(this.sessions || [])]
+      .filter(session => session instanceof Session)  // Type guard to ensure valid sessions
+      .sort((a, b) => b.getStartTime() - a.getStartTime());
   }
 
   async addNote(note: SessionNote): Promise<void> {

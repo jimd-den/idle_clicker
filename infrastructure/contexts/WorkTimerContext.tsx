@@ -19,6 +19,7 @@ import { SmoothnessCalculator } from '@/application/services/SmoothnessCalculato
 import { RPGRewardSystem } from '@/application/services/RPGRewardSystem';
 import { TimerServiceImpl } from '@/infrastructure/TimerServiceImpl';
 import { TimeServiceImpl } from '@/infrastructure/services/TimeServiceImpl';
+import { useWorkSession } from './WorkSessionContext';
 
 interface WorkTimerContextType {
   elapsedTimeMs: number;
@@ -32,17 +33,20 @@ interface WorkTimerContextType {
 const WorkTimerContext = createContext<WorkTimerContextType | null>(null);
 
 export function WorkTimerProvider({ children }: { children: React.ReactNode }) {
+  const workSession = useWorkSession();
+  
   const [workTimerService] = useState(() => {
     const timeService = new TimeServiceImpl();
     const timerService = new TimerServiceImpl(timeService);
-    const workSession = new WorkSession();
     const smoothnessCalculator = new SmoothnessCalculator();
     const rpgRewardSystem = new RPGRewardSystem();
+    
+    // Create use cases
     const startTimerUseCase = new StartTimerUseCase(workSession, timeService);
     const pauseTimerUseCase = new PauseTimerUseCase(workSession, timeService);
     const incrementClicksUseCase = new IncrementClicksUseCase(workSession);
     const resetSessionUseCase = new ResetSessionUseCase(workSession, timeService);
-    
+
     return new WorkTimerServiceImpl(
       workSession,
       timerService,
@@ -76,10 +80,24 @@ export function WorkTimerProvider({ children }: { children: React.ReactNode }) {
     }
   });
 
-  // Keep metrics in sync
+  // Keep metrics in sync with debouncing
   React.useEffect(() => {
-    workTimerService.onMetricsUpdate(setMetrics);
-    return () => workTimerService.clearMetricsUpdateCallback();
+    let lastMetricsString = '';
+    const updateMetrics = (newMetrics: MetricsUpdate) => {
+      const newMetricsString = JSON.stringify(newMetrics);
+      if (lastMetricsString !== newMetricsString) {
+        lastMetricsString = newMetricsString;
+        setMetrics(newMetrics);
+      }
+    };
+
+    workTimerService.onMetricsUpdate(updateMetrics);
+    return () => {
+      workTimerService.clearMetricsUpdateCallback();
+      if (workTimerService.clearPendingUpdates) {
+        workTimerService.clearPendingUpdates();
+      }
+    };
   }, [workTimerService]);
 
   const contextValue = React.useMemo(() => ({

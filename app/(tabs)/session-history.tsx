@@ -1,13 +1,32 @@
-import React from 'react';
-import { StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { SessionHistory } from '@/components/SessionHistory';
 import { useSessionService } from '@/infrastructure/contexts/SessionContext';
 import { Stack } from 'expo-router';
+import { Session } from '@/domain/entities/Session';
 
 export default function SessionHistoryScreen() {
   const { getAllSessions } = useSessionService();
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    try {
+      const loadedSessions = getAllSessions();
+      if (Array.isArray(loadedSessions)) {
+        setSessions(loadedSessions);
+      } else {
+        setSessions([]);
+      }
+    } catch (error) {
+      console.error('Failed to load sessions:', error);
+      setSessions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [getAllSessions]);
 
   return (
     <ThemedView style={styles.container}>
@@ -20,7 +39,14 @@ export default function SessionHistoryScreen() {
           headerTintColor: '#fff',
         }} 
       />
-      <SessionHistory sessions={getAllSessions()} />
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0a7ea4" />
+          <ThemedText style={styles.loadingText}>Loading sessions...</ThemedText>
+        </View>
+      ) : (
+        <SessionHistory sessions={sessions} />
+      )}
     </ThemedView>
   );
 }
@@ -29,5 +55,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#687076',
   },
 });

@@ -15,7 +15,9 @@ import { ResetSessionUseCase } from '@/domain/use_cases/ResetSessionUseCase';
 
 export class WorkTimerServiceImpl implements WorkTimerService {
   private readonly clickTimes: number[] = [];
+  private updateTimeout: NodeJS.Timeout | null = null;
   private metricsUpdateCallback: ((metrics: MetricsUpdate) => void) | null = null;
+  private lastUpdate = 0;
 
   constructor(
     private readonly workSession: WorkSession,
@@ -69,6 +71,8 @@ export class WorkTimerServiceImpl implements WorkTimerService {
     if (this.metricsUpdateCallback) {
       this.metricsUpdateCallback(this.getCurrentMetrics());
     }
+
+    this.batchMetricsUpdate();
   }
 
   resetSession(): MetricsUpdate {
@@ -108,6 +112,38 @@ export class WorkTimerServiceImpl implements WorkTimerService {
 
   clearMetricsUpdateCallback(): void {
     this.metricsUpdateCallback = null;
+  }
+
+  clearPendingUpdates() {
+    if (this.updateTimeout) {
+      clearTimeout(this.updateTimeout);
+      this.updateTimeout = null;
+    }
+  }
+
+  private batchMetricsUpdate() {
+    if (!this.metricsUpdateCallback) return;
+    
+    if (this.updateTimeout) {
+      clearTimeout(this.updateTimeout);
+    }
+    
+    const now = Date.now();
+    if (now - this.lastUpdate > 16) {
+      this.lastUpdate = now;
+      this.updateTimeout = setTimeout(() => {
+        const elapsedTimeMs = this.getElapsedTimeMs();
+        const metrics = {
+          elapsedTimeMs,
+          upm: this.calculateUPM(elapsedTimeMs, this.getClicks()),
+          isRunning: this.isRunning(),
+          clicks: this.getClicks(),
+          smoothnessMetrics: this.workSession.getSmoothnessMetrics(),
+          rewards: this.workSession.getRewards()
+        };
+        this.metricsUpdateCallback!(metrics);
+      }, 16);
+    }
   }
 
   private calculateUPM(elapsedTimeMs: number, clicks: number): number {

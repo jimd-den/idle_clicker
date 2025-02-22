@@ -12,13 +12,14 @@ interface SessionHistoryProps {
 
 export function SessionHistory({ sessions }: SessionHistoryProps) {
   const router = useRouter();
-  const validSessions = sessions || []; // Ensure we have an array even if sessions is undefined
+  const validSessions = sessions?.filter(Boolean) || []; // Filter out any null/undefined sessions
 
   const handleSessionPress = (sessionId: string) => {
-    router.push(`../session-details/${sessionId}`);  // Changed to relative path
+    if (!sessionId) return;
+    router.push(`../session-details/${sessionId}`);
   };
 
-  if (!validSessions.length) {
+  if (!Array.isArray(validSessions) || validSessions.length === 0) {
     return (
       <View style={styles.container}>
         <ThemedText style={styles.emptyText}>No sessions yet. Start a new session to begin tracking!</ThemedText>
@@ -28,69 +29,75 @@ export function SessionHistory({ sessions }: SessionHistoryProps) {
 
   return (
     <ScrollView style={styles.container}>
-      {validSessions.map((session) => (
-        <TouchableOpacity
-          key={session.getId()}
-          onPress={() => handleSessionPress(session.getId())}
-        >
-          <View 
-            style={styles.sessionCard}
-            accessible={true}
-            accessibilityLabel={`Session from ${session.getStartTime().toLocaleDateString()}`}
+      {validSessions.map((session) => {
+        if (!session) return null;
+        const id = session.getId();
+        if (!id) return null;
+        
+        return (
+          <TouchableOpacity
+            key={id}
+            onPress={() => handleSessionPress(id)}
           >
-            <View style={styles.sessionHeader}>
-              <ThemedText style={styles.dateText} accessibilityLabel={`Session date ${session.getStartTime().toLocaleDateString()}`}>
-                {session.getStartTime().toLocaleDateString()}
-              </ThemedText>
-              <ThemedText style={styles.timeText} accessibilityLabel={`Session time ${session.getStartTime().toLocaleTimeString()}`}>
-                {session.getStartTime().toLocaleTimeString()}
-              </ThemedText>
-            </View>
-            
-            <View style={styles.metricsContainer}>
-              <View style={styles.metric}>
-                <ThemedText style={styles.metricLabel}>Duration</ThemedText>
-                <ThemedText style={styles.metricValue} accessibilityLabel={`Duration ${formatTime(session.getDuration())}`}>
-                  {formatTime(session.getDuration())}
+            <View 
+              style={styles.sessionCard}
+              accessible={true}
+              accessibilityLabel={`Session from ${new Date(session.getStartTime()).toLocaleDateString()}`}
+            >
+              <View style={styles.sessionHeader}>
+                <ThemedText style={styles.dateText} accessibilityLabel={`Session date ${new Date(session.getStartTime()).toLocaleDateString()}`}>
+                  {new Date(session.getStartTime()).toLocaleDateString()}
+                </ThemedText>
+                <ThemedText style={styles.timeText} accessibilityLabel={`Session time ${new Date(session.getStartTime()).toLocaleTimeString()}`}>
+                  {new Date(session.getStartTime()).toLocaleTimeString()}
                 </ThemedText>
               </View>
               
-              <View style={styles.metric}>
-                <ThemedText style={styles.metricLabel}>Total Units</ThemedText>
-                <ThemedText style={styles.metricValue} accessibilityLabel={`Total units ${session.getTotalClicks()}`}>
-                  {session.getTotalClicks()}
-                </ThemedText>
+              <View style={styles.metricsContainer}>
+                <View style={styles.metric}>
+                  <ThemedText style={styles.metricLabel}>Duration</ThemedText>
+                  <ThemedText style={styles.metricValue} accessibilityLabel={`Duration ${formatTime(session.getDuration())}`}>
+                    {formatTime(session.getDuration())}
+                  </ThemedText>
+                </View>
+                
+                <View style={styles.metric}>
+                  <ThemedText style={styles.metricLabel}>Total Units</ThemedText>
+                  <ThemedText style={styles.metricValue} accessibilityLabel={`Total units ${session.getTotalClicks()}`}>
+                    {session.getTotalClicks()}
+                  </ThemedText>
+                </View>
+                
+                <View style={styles.metric}>
+                  <ThemedText style={styles.metricLabel}>Final UPM</ThemedText>
+                  <ThemedText style={styles.metricValue} accessibilityLabel={`Final UPM ${session.getFinalUPM().toFixed(2)}`}>
+                    {session.getFinalUPM().toFixed(2)}
+                  </ThemedText>
+                </View>
               </View>
-              
-              <View style={styles.metric}>
-                <ThemedText style={styles.metricLabel}>Final UPM</ThemedText>
-                <ThemedText style={styles.metricValue} accessibilityLabel={`Final UPM ${session.getFinalUPM().toFixed(2)}`}>
-                  {session.getFinalUPM().toFixed(2)}
-                </ThemedText>
-              </View>
-            </View>
 
-            {session.getNotes().length > 0 && (
-              <View style={styles.notesContainer}>
-                <ThemedText style={styles.notesHeader}>Notes:</ThemedText>
-                {session.getNotes().map((note, index) => (
-                  <View key={index} style={styles.noteItem}>
-                    <View style={styles.noteHeader}>
-                      <IconSymbol name="clock" size={14} color="#888" />
-                      <ThemedText style={styles.noteTime}>
-                        {formatTime(note.timestamp)}
+              {session.getNotes()?.length > 0 && (
+                <View style={styles.notesContainer}>
+                  <ThemedText style={styles.notesHeader}>Notes:</ThemedText>
+                  {session.getNotes().map((note, index) => (
+                    <View key={index} style={styles.noteItem}>
+                      <View style={styles.noteHeader}>
+                        <IconSymbol name="clock" size={14} color="#888" />
+                        <ThemedText style={styles.noteTime}>
+                          {formatTime(note.timestamp)}
+                        </ThemedText>
+                      </View>
+                      <ThemedText style={styles.noteText}>
+                        {note.text}
                       </ThemedText>
                     </View>
-                    <ThemedText style={styles.noteText}>
-                      {note.text}
-                    </ThemedText>
-                  </View>
-                ))}
-              </View>
-            )}
-          </View>
-        </TouchableOpacity>
-      ))}
+                  ))}
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
+        );
+      })}
     </ScrollView>
   );
 }

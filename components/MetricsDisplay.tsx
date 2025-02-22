@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { formatTime } from '@/utils/timeUtils';
@@ -23,7 +23,7 @@ interface MetricsDisplayProps {
   };
 }
 
-export function MetricsDisplay({ 
+export const MetricsDisplay = memo(({ 
   clicks, 
   elapsedTimeMs, 
   upm, 
@@ -40,7 +40,7 @@ export function MetricsDisplay({
     flowBonus: 0,
     streakMultiplier: 0
   } 
-}: MetricsDisplayProps) {
+}: MetricsDisplayProps) => {
   const displayTime = formatTime(elapsedTimeMs);
   const shouldShowUPM = elapsedTimeMs > 3000;
 
@@ -140,7 +140,16 @@ export function MetricsDisplay({
       </View>
     </View>
   );
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison to prevent unnecessary re-renders
+  return (
+    prevProps.clicks === nextProps.clicks &&
+    prevProps.elapsedTimeMs === nextProps.elapsedTimeMs &&
+    prevProps.upm === nextProps.upm &&
+    JSON.stringify(prevProps.smoothnessMetrics) === JSON.stringify(nextProps.smoothnessMetrics) &&
+    JSON.stringify(prevProps.rewards) === JSON.stringify(nextProps.rewards)
+  );
+});
 
 const styles = StyleSheet.create({
   container: {

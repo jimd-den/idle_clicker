@@ -14,10 +14,25 @@ const factory = new SessionFactory();
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [sessionService] = useState(() => factory.createSessionService());
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    sessionService.initialize();
+    const initializeService = async () => {
+      try {
+        await sessionService.initialize();
+        setIsInitialized(true);
+      } catch (error) {
+        console.error('Failed to initialize session service:', error);
+        // Still set as initialized to prevent infinite loops, but with empty state
+        setIsInitialized(true);
+      }
+    };
+    initializeService();
   }, [sessionService]);
+
+  if (!isInitialized) {
+    return null; // Or a loading spinner
+  }
 
   return (
     <SessionContext.Provider value={sessionService}>

@@ -57,4 +57,5 @@ export interface WorkTimerService {
   getCurrentMetrics(): MetricsUpdate;
   onMetricsUpdate(callback: (metrics: MetricsUpdate) => void): void;
   clearMetricsUpdateCallback(): void;
+  clearPendingUpdates?(): void;
 }

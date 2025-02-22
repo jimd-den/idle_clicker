@@ -14,6 +14,7 @@ export class TimerServiceImpl implements TimerService {
   private startTime: number = 0;
   private elapsedTimeMs: number = 0;
   private timeUpdateCallback: ((elapsedTimeMs: number) => void) | null = null;
+  private lastUpdate: number = 0;
 
   constructor(private readonly timeService: TimeService) {}
 
@@ -56,9 +57,12 @@ export class TimerServiceImpl implements TimerService {
   private updateElapsedTime(): void {
     if (this.intervalId) {
       const now = this.timeService.getCurrentTime();
-      this.elapsedTimeMs = now - this.startTime;
-      if (this.timeUpdateCallback) {
-        this.timeUpdateCallback(this.elapsedTimeMs);
+      if (now - this.lastUpdate >= 16) {  // Only update if 16ms has passed
+        this.lastUpdate = now;
+        this.elapsedTimeMs = now - this.startTime;
+        if (this.timeUpdateCallback) {
+          this.timeUpdateCallback(this.elapsedTimeMs);
+        }
       }
     }
   }

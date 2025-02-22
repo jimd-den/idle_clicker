@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { StyleSheet, View, TouchableOpacity, TextInput, FlatList, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import debounce from 'lodash/debounce';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { PlayScreenController } from '@/presentation/controllers/PlayScreenController';
@@ -12,6 +13,7 @@ import { useWorkSession } from '@/infrastructure/contexts/WorkSessionContext';
 import { useWorkTimer } from '@/infrastructure/contexts/WorkTimerContext';
 import { useSessionService } from '@/infrastructure/contexts/SessionContext';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 interface MetricsUpdate {
   elapsedTimeMs: number;
@@ -64,38 +66,38 @@ export default function PlayScreen() {
 
   const controllerRef = useRef<PlayScreenController | null>(null);
 
-  // Memoize the metrics update callback
-  const metricsUpdateCallback = useCallback((updatedMetrics: MetricsUpdate) => {
-    // Only update if the values have actually changed
-    setMetrics(prev => {
-      if (JSON.stringify(prev) === JSON.stringify(updatedMetrics)) {
-        return prev;
-      }
-      return updatedMetrics;
-    });
-  }, []);
+  // Memoize the metrics update callback with debouncing
+  const metricsUpdateCallback = useCallback(
+    debounce((updatedMetrics: MetricsUpdate) => {
+      setMetrics(prev => {
+        if (JSON.stringify(prev) === JSON.stringify(updatedMetrics)) {
+          return prev;
+        }
+        return updatedMetrics;
+      });
+    }, 16), // 60fps frame rate
+    []
+  );
 
-  // Initialize controller once
+  // Initialize controller with proper cleanup
   useEffect(() => {
     controllerRef.current = new PlayScreenController(workSession, workTimer.timerService);
-    
-    // Set up metrics update subscription first
     const currentController = controllerRef.current;
+    
     currentController.onMetricsUpdate(metricsUpdateCallback);
     
-    // Then initialize metrics and reset session
     const resetMetrics = currentController.resetSession();
     setMetrics(resetMetrics);
     setNotes([]);
 
-    // Cleanup
     return () => {
       if (currentController) {
         currentController.clearMetricsUpdateCallback();
         currentController.pauseTimer();
+        metricsUpdateCallback.cancel(); // Cancel any pending debounced updates
       }
     };
-  }, [workSession, workTimer, metricsUpdateCallback]); // Only recreate when core dependencies change
+  }, [workSession, workTimer, metricsUpdateCallback]);
 
   const handleEndSession = useCallback(async () => {
     if (controllerRef.current) {
@@ -157,102 +159,104 @@ export default function PlayScreen() {
 
   // --- Render ---
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
-      <ThemedView style={styles.container}>
-        {error && (
-          <View style={styles.errorContainer}>
-            <IconSymbol name="xmark.circle" size={20} color="#e74c3c" />
-            <ThemedText style={styles.errorText}>{error}</ThemedText>
-          </View>
-        )}
-
-        <View style={styles.metricsContainer}>
-          <MetricsDisplay 
-            clicks={metrics.clicks} 
-            elapsedTimeMs={metrics.elapsedTimeMs} 
-            upm={metrics.upm}
-            smoothnessMetrics={metrics.smoothnessMetrics}
-            rewards={metrics.rewards}
-          />
-        </View>
-
-        <View style={styles.mainContent}>
-          <TouchableOpacity
-            style={[styles.clickButton, !metrics.isRunning && styles.clickButtonDisabled]}
-            onPress={handleIncrementClick}
-            accessibilityLabel="Click to increment work units"
-            disabled={!metrics.isRunning}
-          >
-            <IconSymbol name="plus.circle" size={48} color="#fff" />
-          </TouchableOpacity>
-
-          <TimerControls
-            isRunning={metrics.isRunning}
-            onStartPause={handleStartPause}
-            onReset={handleReset}
-          />
-        </View>
-
-        <View style={styles.bottomSection}>
-          {!metrics.isRunning && (
-            <>
-              <View style={styles.noteInputContainer}>
-                <TextInput
-                  style={styles.noteTextInput}
-                  placeholder="Add note..."
-                  placeholderTextColor="rgba(255,255,255,0.5)"
-                  value={noteText}
-                  onChangeText={setNoteText}
-                  multiline
-                  numberOfLines={2}
-                  maxLength={200}
-                />
-                <TouchableOpacity
-                  style={[styles.addButton, !noteText.trim() && styles.addButtonDisabled]}
-                  onPress={handleAddNote}
-                  disabled={!noteText.trim()}
-                  accessibilityLabel="Add Note"
-                >
-                  <IconSymbol name="plus" size={24} color="#fff" />
-                </TouchableOpacity>
-              </View>
-
-              <FlatList
-                data={notes}
-                keyExtractor={(_, index) => index.toString()}
-                renderItem={({ item }) => (
-                  <View style={styles.noteItem}>
-                    <View style={styles.noteHeader}>
-                      <IconSymbol name="clock" size={14} color="#888" />
-                      <ThemedText style={styles.noteTimestamp}>{item.timestamp}</ThemedText>
-                    </View>
-                    <ThemedText style={styles.noteText}>{item.text}</ThemedText>
-                  </View>
-                )}
-                ListEmptyComponent={() => (
-                  <View style={styles.emptyNotesContainer}>
-                    <IconSymbol name="info.circle" size={24} color="#777" />
-                    <ThemedText style={styles.emptyNotes}>Pause timer to add notes</ThemedText>
-                  </View>
-                )}
-                style={styles.notesList}
-              />
-            </>
+    <ErrorBoundary>
+      <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
+        <ThemedView style={styles.container}>
+          {error && (
+            <View style={styles.errorContainer}>
+              <IconSymbol name="xmark.circle" size={20} color="#e74c3c" />
+              <ThemedText style={styles.errorText}>{error}</ThemedText>
+            </View>
           )}
 
-          <TouchableOpacity 
-            style={[styles.endSessionButton]} 
-            onPress={handleEndSession}
-            accessibilityLabel="End Session"
-          >
-            <View style={styles.buttonContent}>
-              <IconSymbol name="stop.circle" size={24} color="#fff" />
-              <ThemedText style={styles.endSessionButtonText}>End Session</ThemedText>
-            </View>
-          </TouchableOpacity>
-        </View>
-      </ThemedView>
-    </SafeAreaView>
+          <View style={styles.metricsContainer}>
+            <MetricsDisplay 
+              clicks={metrics.clicks} 
+              elapsedTimeMs={metrics.elapsedTimeMs} 
+              upm={metrics.upm}
+              smoothnessMetrics={metrics.smoothnessMetrics}
+              rewards={metrics.rewards}
+            />
+          </View>
+
+          <View style={styles.mainContent}>
+            <TouchableOpacity
+              style={[styles.clickButton, !metrics.isRunning && styles.clickButtonDisabled]}
+              onPress={handleIncrementClick}
+              accessibilityLabel="Click to increment work units"
+              disabled={!metrics.isRunning}
+            >
+              <IconSymbol name="plus.circle" size={48} color="#fff" />
+            </TouchableOpacity>
+
+            <TimerControls
+              isRunning={metrics.isRunning}
+              onStartPause={handleStartPause}
+              onReset={handleReset}
+            />
+          </View>
+
+          <View style={styles.bottomSection}>
+            {!metrics.isRunning && (
+              <>
+                <View style={styles.noteInputContainer}>
+                  <TextInput
+                    style={styles.noteTextInput}
+                    placeholder="Add note..."
+                    placeholderTextColor="rgba(255,255,255,0.5)"
+                    value={noteText}
+                    onChangeText={setNoteText}
+                    multiline
+                    numberOfLines={2}
+                    maxLength={200}
+                  />
+                  <TouchableOpacity
+                    style={[styles.addButton, !noteText.trim() && styles.addButtonDisabled]}
+                    onPress={handleAddNote}
+                    disabled={!noteText.trim()}
+                    accessibilityLabel="Add Note"
+                  >
+                    <IconSymbol name="plus" size={24} color="#fff" />
+                  </TouchableOpacity>
+                </View>
+
+                <FlatList
+                  data={notes}
+                  keyExtractor={(_, index) => index.toString()}
+                  renderItem={({ item }) => (
+                    <View style={styles.noteItem}>
+                      <View style={styles.noteHeader}>
+                        <IconSymbol name="clock" size={14} color="#888" />
+                        <ThemedText style={styles.noteTimestamp}>{item.timestamp}</ThemedText>
+                      </View>
+                      <ThemedText style={styles.noteText}>{item.text}</ThemedText>
+                    </View>
+                  )}
+                  ListEmptyComponent={() => (
+                    <View style={styles.emptyNotesContainer}>
+                      <IconSymbol name="info.circle" size={24} color="#777" />
+                      <ThemedText style={styles.emptyNotes}>Pause timer to add notes</ThemedText>
+                    </View>
+                  )}
+                  style={styles.notesList}
+                />
+              </>
+            )}
+
+            <TouchableOpacity 
+              style={[styles.endSessionButton]} 
+              onPress={handleEndSession}
+              accessibilityLabel="End Session"
+            >
+              <View style={styles.buttonContent}>
+                <IconSymbol name="stop.circle" size={24} color="#fff" />
+                <ThemedText style={styles.endSessionButtonText}>End Session</ThemedText>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </ThemedView>
+      </SafeAreaView>
+    </ErrorBoundary>
   );
 }
 

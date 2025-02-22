@@ -12,6 +12,8 @@ export class PlayScreenController {
   private workSession: WorkSession;
   private workTimerService: WorkTimerService;
   private metricsUpdateCallback: ((metrics: MetricsUpdate) => void) | null = null;
+  private lastUpdate = 0;
+  private lastMetricsString: string = '';
 
   constructor(workSession: WorkSession, workTimerService: WorkTimerService) {
     this.workSession = workSession;
@@ -39,9 +41,22 @@ export class PlayScreenController {
   }
 
   onMetricsUpdate(callback: (metrics: MetricsUpdate) => void): void {
+    if (this.metricsUpdateCallback === callback) return; // Prevent duplicate subscriptions
+    
     this.metricsUpdateCallback = callback;
-    // Don't set up nested callbacks, just pass through
-    this.workTimerService.onMetricsUpdate(callback);
+    this.workTimerService.onMetricsUpdate((metrics) => {
+      const now = Date.now();
+      if (now - this.lastUpdate > 16) { // Only update every 16ms
+        this.lastUpdate = now;
+        if (this.metricsUpdateCallback) {
+          const stringifiedMetrics = JSON.stringify(metrics);
+          if (this.lastMetricsString !== stringifiedMetrics) {
+            this.lastMetricsString = stringifiedMetrics;
+            this.metricsUpdateCallback(metrics);
+          }
+        }
+      }
+    });
   }
 
   clearMetricsUpdateCallback(): void {
