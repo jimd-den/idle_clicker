@@ -10,6 +10,13 @@ export class Session {
   private totalClicks: number;
   private notes: SessionNote[];
   private finalUPM: number;
+  smoothnessMetrics: {
+    consistency: number;
+    rhythm: number;
+    flowState: number;
+    criticalSuccess: number;
+    criticalFailure: number;
+  };
 
   constructor(id?: string) {
     this.id = id || new Date().getTime().toString();
@@ -18,6 +25,13 @@ export class Session {
     this.totalClicks = 0;
     this.notes = [];
     this.finalUPM = 0;
+    this.smoothnessMetrics = {
+      consistency: 0,
+      rhythm: 0,
+      flowState: 0,
+      criticalSuccess: 0,
+      criticalFailure: 0
+    };
   }
 
   // Getters
@@ -50,6 +64,16 @@ export class Session {
       return new Date().getTime() - this.startTime.getTime();
     }
     return this.endTime.getTime() - this.startTime.getTime();
+  }
+
+  getSmoothnessMetrics(): {
+    consistency: number;
+    rhythm: number;
+    flowState: number;
+    criticalSuccess: number;
+    criticalFailure: number;
+  } {
+    return this.smoothnessMetrics;
   }
 
   // Setters and methods
@@ -115,7 +139,8 @@ export class Session {
       endTime: this.endTime,
       totalClicks: this.totalClicks,
       notes: this.notes,
-      finalUPM: this.finalUPM
+      finalUPM: this.finalUPM,
+      smoothnessMetrics: this.smoothnessMetrics
     };
   }
 
@@ -128,10 +153,21 @@ export class Session {
       notes: data.notes,
       finalUPM: data.finalUPM
     });
+    session.updateSmoothnessMetrics(data.smoothnessMetrics);
     return session;
   }
 
   isComplete(): boolean {
     return this.endTime !== null;
+  }
+
+  updateSmoothnessMetrics(metrics: {
+    consistency: number;
+    rhythm: number;
+    flowState: number;
+    criticalSuccess: number;
+    criticalFailure: number;
+  }): void {
+    this.smoothnessMetrics = metrics;
   }
 }

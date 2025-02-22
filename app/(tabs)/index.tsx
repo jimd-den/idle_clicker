@@ -19,6 +19,10 @@ export default function HomeScreen() {
     router.push('/play');
   };
 
+  const handleSessionHistoryPress = () => {
+    router.push('./session-history');  // Changed to relative path
+  };
+
   return (
     <ThemedView style={styles.container}>
       <HelloWave />
@@ -46,7 +50,9 @@ export default function HomeScreen() {
               <IconSymbol name="clock.fill" size={20} color="#687076" />
               <ThemedText style={styles.sectionTitle}>Session History</ThemedText>
             </View>
-            <SessionHistory sessions={getAllSessions()} />
+            <TouchableOpacity onPress={handleSessionHistoryPress}>
+              <SessionHistory sessions={getAllSessions()} />
+            </TouchableOpacity>
           </View>
         </>
       )}

@@ -4,7 +4,7 @@ import { Session, SessionNote } from '@/domain/entities/Session';
 
 interface SessionContextType {
   startNewSession: () => Promise<Session>;
-  endCurrentSession: (clicks: number, upm: number) => Promise<Session | null>;
+  endCurrentSession: (clicks: number, upm: number, smoothnessMetrics: { consistency: number; rhythm: number; flowState: number; criticalSuccess: number; criticalFailure: number; }) => Promise<Session | null>;
   getCurrentSession: () => Session | null;
   getAllSessions: () => Session[];
   addNote: (note: SessionNote) => Promise<void>;
@@ -45,10 +45,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
   }, [sessionService]);
 
-  const endCurrentSession = useCallback(async (clicks: number, upm: number) => {
+  const endCurrentSession = useCallback(async (clicks: number, upm: number, smoothnessMetrics: { consistency: number; rhythm: number; flowState: number; criticalSuccess: number; criticalFailure: number; }) => {
     try {
       setError(null);
-      return await sessionService.endCurrentSession(clicks, upm);
+      return await sessionService.endCurrentSession(clicks, upm, smoothnessMetrics);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to end session';
       setError(errorMessage);

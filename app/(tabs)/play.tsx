@@ -97,8 +97,8 @@ export default function PlayScreen() {
         if (metrics.isRunning) {
           controllerRef.current.pauseTimer();
         }
-        // End the current session with final metrics
-        await endCurrentSession(metrics.clicks, metrics.upm);
+        // End the current session with final metrics, include smoothnessMetrics
+        await endCurrentSession(metrics.clicks, metrics.upm, metrics.smoothnessMetrics);
         // Navigate back to history screen
         router.replace('/');
       } catch (err) {

@@ -73,11 +73,22 @@ export class SessionService {
     return this.currentSession;
   }
 
-  async endCurrentSession(clicks: number, upm: number): Promise<Session | null> {
+  async endCurrentSession(
+    clicks: number, 
+    upm: number, 
+    smoothnessMetrics: {
+      consistency: number;
+      rhythm: number;
+      flowState: number;
+      criticalSuccess: number;
+      criticalFailure: number;
+    }
+  ): Promise<Session | null> {
     if (this.currentSession && !this.currentSession.isComplete()) {
       try {
         this.currentSession.setTotalClicks(clicks);
         this.currentSession.setFinalUPM(upm);
+        this.currentSession.updateSmoothnessMetrics(smoothnessMetrics);
         this.currentSession.setEndTime(new Date());
         
         const completedSession = this.currentSession;

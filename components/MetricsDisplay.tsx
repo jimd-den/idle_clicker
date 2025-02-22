@@ -62,6 +62,7 @@ export function MetricsDisplay({
         <ThemedText style={styles.metricLabel}>Time</ThemedText>
       </View>
 
+      {/*
       <View style={styles.metricContainer} accessibilityRole="text">
         <IconSymbol name="speedometer" size={20} color="#687076" />
         <ThemedText 
@@ -72,9 +73,10 @@ export function MetricsDisplay({
         </ThemedText>
         <ThemedText style={styles.metricLabel}>UPM</ThemedText>
       </View>
+      */}
 
       <View style={styles.metricContainer} accessibilityRole="text">
-        <IconSymbol name="gauge" size={20} color="#687076" />
+        <IconSymbol name="exclamationmark.circle" size={20} color="#687076" />
         <ThemedText style={styles.metricValue} accessibilityLabel={`Consistency ${smoothnessMetrics.consistency}`}>
           {smoothnessMetrics.consistency}
         </ThemedText>
@@ -82,7 +84,7 @@ export function MetricsDisplay({
       </View>
 
       <View style={styles.metricContainer} accessibilityRole="text">
-        <IconSymbol name="gauge" size={20} color="#687076" />
+        <IconSymbol name="exclamationmark.circle" size={20} color="#687076" />
         <ThemedText style={styles.metricValue} accessibilityLabel={`Rhythm ${smoothnessMetrics.rhythm}`}>
           {smoothnessMetrics.rhythm}
         </ThemedText>
@@ -90,7 +92,7 @@ export function MetricsDisplay({
       </View>
 
       <View style={styles.metricContainer} accessibilityRole="text">
-        <IconSymbol name="gauge" size={20} color="#687076" />
+        <IconSymbol name="exclamationmark.circle" size={20} color="#687076" />
         <ThemedText style={styles.metricValue} accessibilityLabel={`Flow State ${smoothnessMetrics.flowState}`}>
           {smoothnessMetrics.flowState}
         </ThemedText>
@@ -98,7 +100,7 @@ export function MetricsDisplay({
       </View>
 
       <View style={styles.metricContainer} accessibilityRole="text">
-        <IconSymbol name="gauge" size={20} color="#687076" />
+        <IconSymbol name="exclamationmark.circle" size={20} color="#687076" />
         <ThemedText style={styles.metricValue} accessibilityLabel={`Critical Success ${smoothnessMetrics.criticalSuccess}`}>
           {smoothnessMetrics.criticalSuccess}
         </ThemedText>
@@ -106,7 +108,7 @@ export function MetricsDisplay({
       </View>
 
       <View style={styles.metricContainer} accessibilityRole="text">
-        <IconSymbol name="gauge" size={20} color="#687076" />
+        <IconSymbol name="exclamationmark.circle" size={20} color="#687076" />
         <ThemedText style={styles.metricValue} accessibilityLabel={`Critical Failure ${smoothnessMetrics.criticalFailure}`}>
           {smoothnessMetrics.criticalFailure}
         </ThemedText>
@@ -114,7 +116,7 @@ export function MetricsDisplay({
       </View>
 
       <View style={styles.metricContainer} accessibilityRole="text">
-        <IconSymbol name="star" size={20} color="#687076" />
+        <IconSymbol name="paperplane.fill" size={20} color="#687076" />
         <ThemedText style={styles.metricValue} accessibilityLabel={`Experience ${rewards.experience}`}>
           {rewards.experience}
         </ThemedText>
@@ -122,7 +124,7 @@ export function MetricsDisplay({
       </View>
 
       <View style={styles.metricContainer} accessibilityRole="text">
-        <IconSymbol name="star" size={20} color="#687076" />
+        <IconSymbol name="chevron.left.forwardslash.chevron.right" size={20} color="#687076" />
         <ThemedText style={styles.metricValue} accessibilityLabel={`Flow Bonus ${rewards.flowBonus}`}>
           {rewards.flowBonus}
         </ThemedText>
@@ -130,7 +132,7 @@ export function MetricsDisplay({
       </View>
 
       <View style={styles.metricContainer} accessibilityRole="text">
-        <IconSymbol name="star" size={20} color="#687076" />
+        <IconSymbol name="stop.circle" size={20} color="#687076" />
         <ThemedText style={styles.metricValue} accessibilityLabel={`Streak Multiplier ${rewards.streakMultiplier}`}>
           {rewards.streakMultiplier}
         </ThemedText>
