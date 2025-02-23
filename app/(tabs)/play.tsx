@@ -100,14 +100,21 @@ export default function PlayScreen() {
         setError(null);
         setIsEnding(true);
         
-        // Make sure timer is stopped
-        controllerRef.current.pauseTimer();
+        // Make sure timer is stopped and metrics are settled before ending
+        await controllerRef.current.pauseTimer();
         setMetrics(prev => ({ ...prev, isRunning: false }));
         
-        // End the session
-        await endCurrentSession(metrics.clicks, metrics.upm, metrics.smoothnessMetrics);
+        // Wait a frame to ensure metrics are updated
+        await new Promise(resolve => requestAnimationFrame(resolve));
         
-        // Navigate back to home screen
+        // End the session with final metrics
+        await endCurrentSession(
+          metrics.clicks,
+          metrics.upm,
+          metrics.elapsedTimeMs,
+          metrics.smoothnessMetrics
+        );
+        
         router.replace('/');
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to end session');

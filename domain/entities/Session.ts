@@ -25,7 +25,7 @@ export class Session {
   private totalClicks: number;
   private notes: SessionNote[];
   private finalUPM: number;
-  private duration: number;
+  private elapsedTimeMs: number;
   private smoothnessMetrics: {
     consistency: number;
     rhythm: number;
@@ -41,7 +41,7 @@ export class Session {
     this.totalClicks = 0;
     this.notes = [];
     this.finalUPM = 0;
-    this.duration = 0;
+    this.elapsedTimeMs = 0;
     this.smoothnessMetrics = {
       consistency: 0,
       rhythm: 0,
@@ -77,7 +77,7 @@ export class Session {
   }
 
   getDuration(): number {
-    return this.duration;
+    return this.elapsedTimeMs;
   }
 
   getSmoothnessMetrics(): {
@@ -91,15 +91,22 @@ export class Session {
   }
 
   // Setters and methods
-  setEndTime(endTime: number): void {
+  setEndTime(endTime: number, elapsedTimeMs: number): void {
     this.endTime = endTime;
+    this.elapsedTimeMs = elapsedTimeMs;
+    // Recalculate final metrics immediately
+    if (this.totalClicks > 0) {
+      const minutes = elapsedTimeMs / (1000 * 60);
+      this.finalUPM = minutes > 0 ? Math.round((this.totalClicks / minutes) * 10) / 10 : 0;
+    }
   }
 
   setTotalClicks(clicks: number): void {
     this.totalClicks = clicks;
     // Update UPM immediately when clicks change
-    if (this.duration > 0) {
-      const minutes = this.duration / (1000 * 60);
+    if (this.endTime) {
+      const duration = this.getDuration();
+      const minutes = duration / (1000 * 60);
       this.finalUPM = minutes > 0 ? Math.round((clicks / minutes) * 10) / 10 : 0;
     }
   }
@@ -117,14 +124,6 @@ export class Session {
     if (typeof props.totalClicks === 'number') this.setTotalClicks(props.totalClicks);
     if (props.notes) this.notes = [...props.notes];
     if (typeof props.finalUPM === 'number') this.getFinalUPM();
-  }
-
-  setDuration(durationMs: number): void {
-    this.duration = durationMs;
-    if (this.totalClicks > 0) {
-      const minutes = durationMs / (1000 * 60);
-      this.finalUPM = minutes > 0 ? Math.round((this.totalClicks / minutes) * 10) / 10 : 0;
-    }
   }
 
   toJSON() {

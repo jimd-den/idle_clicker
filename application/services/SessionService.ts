@@ -122,7 +122,8 @@ export class SessionService {
 
   async endCurrentSession(
     clicks: number, 
-    upm: number, 
+    upm: number,
+    elapsedTimeMs: number,
     smoothnessMetrics: {
       consistency: number;
       rhythm: number;
@@ -135,17 +136,21 @@ export class SessionService {
     
     if (this.currentSession && !this.currentSession.isComplete()) {
       const currentTime = this.timeService.getCurrentTime();
+      
+      // Update all session data before marking as complete
       this.currentSession.setTotalClicks(clicks);
-      this.currentSession.getFinalUPM();
       this.currentSession.updateSmoothnessMetrics(smoothnessMetrics);
-      this.currentSession.setEndTime(currentTime);
+      
+      // Set end time last to mark session as complete
+      this.currentSession.setEndTime(currentTime, elapsedTimeMs);
       
       const completedSession = this.currentSession;
-      this.currentSession = null;
       
+      // Persist before clearing current session
       await this.persistSessions();
       await this.persistCurrentSession();
       
+      this.currentSession = null;
       return completedSession;
     }
     return null;
