@@ -9,24 +9,29 @@ import { Session } from '@/domain/entities/Session';
 
 export default function SessionHistoryScreen() {
   const { getAllSessions } = useSessionService();
+  const sessionService = useSessionService();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const loadedSessions = getAllSessions();
-      if (Array.isArray(loadedSessions)) {
-        setSessions(loadedSessions);
-      } else {
+    const initializeAndLoadSessions = async () => {
+      try {
+        await sessionService.initialize();
+        const loadedSessions = await getAllSessions();
+        if (Array.isArray(loadedSessions)) {
+          setSessions(loadedSessions);
+        } else {
+          setSessions([]);
+        }
+      } catch (error) {
+        console.error('Failed to load sessions:', error);
         setSessions([]);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Failed to load sessions:', error);
-      setSessions([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [getAllSessions]);
+    };
+    initializeAndLoadSessions();
+  }, [getAllSessions, sessionService]);
 
   return (
     <ThemedView style={styles.container}>

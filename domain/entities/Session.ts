@@ -95,14 +95,22 @@ export class Session {
   // Setters and methods
   setEndTime(endTime: number): void {
     this.endTime = endTime;
+    // Recalculate final metrics immediately
+    if (this.totalClicks > 0) {
+      const duration = this.getDuration();
+      const minutes = duration / (1000 * 60);
+      this.finalUPM = minutes > 0 ? Math.round((this.totalClicks / minutes) * 10) / 10 : 0;
+    }
   }
 
   setTotalClicks(clicks: number): void {
     this.totalClicks = clicks;
-  }
-
-  setFinalUPM(upm: number): void {
-    this.finalUPM = upm;
+    // Update UPM immediately when clicks change
+    if (this.endTime) {
+      const duration = this.getDuration();
+      const minutes = duration / (1000 * 60);
+      this.finalUPM = minutes > 0 ? Math.round((clicks / minutes) * 10) / 10 : 0;
+    }
   }
 
   addNote(note: SessionNote): void {

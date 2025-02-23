@@ -15,9 +15,7 @@ import { ResetSessionUseCase } from '@/domain/use_cases/ResetSessionUseCase';
 
 export class WorkTimerServiceImpl implements WorkTimerService {
   private readonly clickTimes: number[] = [];
-  private updateTimeout: NodeJS.Timeout | null = null;
   private metricsUpdateCallback: ((metrics: MetricsUpdate) => void) | null = null;
-  private lastUpdate = 0;
 
   constructor(
     private readonly workSession: WorkSession,
@@ -38,48 +36,59 @@ export class WorkTimerServiceImpl implements WorkTimerService {
   }
 
   startTimer(): boolean {
+    console.log('WorkTimerService: startTimer called');
     this.startTimerUseCase.execute();
     this.timerService.start();
+    const metrics = this.getCurrentMetrics();
+    if (this.metricsUpdateCallback) {
+      this.metricsUpdateCallback(metrics);
+    }
     return true;
   }
 
   pauseTimer(): boolean {
+    console.log('WorkTimerService: pauseTimer called');
     this.pauseTimerUseCase.execute();
     this.timerService.pause();
+    const metrics = this.getCurrentMetrics();
+    if (this.metricsUpdateCallback) {
+      this.metricsUpdateCallback(metrics);
+    }
     return false;
   }
 
   incrementClicks(): void {
+    console.log('WorkTimerService: incrementClicks called');
     this.incrementClicksUseCase.execute();
-    
     const currentTime = this.timeService.getCurrentTime();
     this.clickTimes.push(currentTime);
-    
     if (this.clickTimes.length > 10) {
       this.clickTimes.shift();
     }
-
-    if (this.clickTimes.length > 1) {
-      const timeGaps = this.calculateTimeGaps();
-      const smoothnessMetrics = this.smoothnessCalculator.calculateSmoothnessScore(timeGaps);
-      this.workSession.updateSmoothnessMetrics(smoothnessMetrics);
-      
-      const rewards = this.rpgRewardSystem.calculateRewards(smoothnessMetrics);
-      this.workSession.updateRewards(rewards);
-    }
-
+    
+    // Always calculate metrics
+    const timeGaps = this.calculateTimeGaps();
+    const smoothnessMetrics = this.smoothnessCalculator.calculateSmoothnessScore(timeGaps);
+    this.workSession.updateSmoothnessMetrics(smoothnessMetrics);
+    const rewards = this.rpgRewardSystem.calculateRewards(smoothnessMetrics);
+    this.workSession.updateRewards(rewards);
+    
+    // Immediate callback
     if (this.metricsUpdateCallback) {
       this.metricsUpdateCallback(this.getCurrentMetrics());
     }
-
-    this.batchMetricsUpdate();
   }
 
   resetSession(): MetricsUpdate {
+    console.log('WorkTimerService: resetSession called');
     this.resetSessionUseCase.execute(true);
     this.timerService.reset();
     this.clickTimes.length = 0;
-    return this.getCurrentMetrics();
+    const metrics = this.getCurrentMetrics();
+    if (this.metricsUpdateCallback) {
+      this.metricsUpdateCallback(metrics);
+    }
+    return metrics;
   }
 
   isRunning(): boolean {
@@ -114,46 +123,12 @@ export class WorkTimerServiceImpl implements WorkTimerService {
     this.metricsUpdateCallback = null;
   }
 
-  clearPendingUpdates() {
-    if (this.updateTimeout) {
-      clearTimeout(this.updateTimeout);
-      this.updateTimeout = null;
-    }
-  }
-
-  private batchMetricsUpdate() {
-    if (!this.metricsUpdateCallback) return;
-    
-    if (this.updateTimeout) {
-      clearTimeout(this.updateTimeout);
-    }
-    
-    const now = Date.now();
-    if (now - this.lastUpdate > 16) {
-      this.lastUpdate = now;
-      this.updateTimeout = setTimeout(() => {
-        const elapsedTimeMs = this.getElapsedTimeMs();
-        const metrics = {
-          elapsedTimeMs,
-          upm: this.calculateUPM(elapsedTimeMs, this.getClicks()),
-          isRunning: this.isRunning(),
-          clicks: this.getClicks(),
-          smoothnessMetrics: this.workSession.getSmoothnessMetrics(),
-          rewards: this.workSession.getRewards()
-        };
-        this.metricsUpdateCallback!(metrics);
-      }, 16);
-    }
-  }
-
   private calculateUPM(elapsedTimeMs: number, clicks: number): number {
     const minutes = elapsedTimeMs / (1000 * 60);
     return minutes > 0 ? Math.round((clicks / minutes) * 10) / 10 : 0;
   }
 
   private calculateTimeGaps(): number[] {
-    return this.clickTimes.slice(1).map((time, index) => 
-      time - this.clickTimes[index]
-    );
+    return this.clickTimes.slice(1).map((time, index) => time - this.clickTimes[index]);
   }
 }

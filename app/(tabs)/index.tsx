@@ -15,21 +15,23 @@ import { useWorkTimerService } from '@/infrastructure/contexts/WorkSessionContex
 export default function HomeScreen() {
   const router = useRouter();
   const { getAllSessions, startNewSession } = useSessionService();
+  const sessionService = useSessionService();
   const workTimerService = useWorkTimerService();
   const [isLoading, setIsLoading] = useState(true);
   const [sessions, setSessions] = useState<Session[]>([]);
 
   useEffect(() => {
-    const loadSessions = async () => {
+    const initializeAndLoadSessions = async () => {
       try {
-        const loadedSessions = getAllSessions();
+        await sessionService.initialize();
+        const loadedSessions = await getAllSessions();
         setSessions(loadedSessions);
       } finally {
         setIsLoading(false);
       }
     };
-    loadSessions();
-  }, [getAllSessions]);
+    initializeAndLoadSessions();
+  }, [getAllSessions, sessionService]);
 
   const handleStartNewSession = () => {
     workTimerService.resetSession();

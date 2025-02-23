@@ -40,11 +40,13 @@ export class WorkSession {
   start(timestamp: number): void {
     this.startTime = timestamp;
     this.endTime = null;
+    this.elapsedTimeMs = 0;
   }
 
   pause(timestamp: number): void {
     if (this.startTime && !this.endTime) {
       this.endTime = timestamp;
+      this.elapsedTimeMs = this.endTime - this.startTime;
     }
   }
 
@@ -74,6 +76,10 @@ export class WorkSession {
 
   recordClick(): void {
     this.clicks++;
+    // Ensure elapsedTimeMs is always current
+    if (this.startTime && !this.endTime) {
+      this.elapsedTimeMs = Date.now() - this.startTime;
+    }
   }
 
   getElapsedTimeMs(): number {

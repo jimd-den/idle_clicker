@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { StyleSheet, View, TouchableOpacity, TextInput, FlatList, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import debounce from 'lodash/debounce';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { PlayScreenController } from '@/presentation/controllers/PlayScreenController';
@@ -66,18 +65,10 @@ export default function PlayScreen() {
 
   const controllerRef = useRef<PlayScreenController | null>(null);
 
-  // Memoize the metrics update callback with debouncing
-  const metricsUpdateCallback = useCallback(
-    debounce((updatedMetrics: MetricsUpdate) => {
-      setMetrics(prev => {
-        if (JSON.stringify(prev) === JSON.stringify(updatedMetrics)) {
-          return prev;
-        }
-        return updatedMetrics;
-      });
-    }, 16), // 60fps frame rate
-    []
-  );
+  // Direct metrics update without debouncing
+  const metricsUpdateCallback = useCallback((updatedMetrics: MetricsUpdate) => {
+    setMetrics(updatedMetrics);
+  }, []);
 
   // Initialize controller with proper cleanup
   useEffect(() => {
@@ -94,7 +85,6 @@ export default function PlayScreen() {
       if (currentController) {
         currentController.clearMetricsUpdateCallback();
         currentController.pauseTimer();
-        metricsUpdateCallback.cancel(); // Cancel any pending debounced updates
       }
     };
   }, [workSession, workTimer, metricsUpdateCallback]);
