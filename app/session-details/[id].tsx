@@ -1,5 +1,5 @@
-import React from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, ScrollView, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -7,12 +7,41 @@ import { MetricsDisplay } from '@/components/MetricsDisplay';
 import { useSessionService } from '@/infrastructure/contexts/SessionContext';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { formatTime } from '@/utils/timeUtils';
+import { Session } from '@/domain/entities/Session';
 
 export default function SessionDetailsScreen() {
   const { id } = useLocalSearchParams();
   const { getAllSessions } = useSessionService();
-  
-  const session = getAllSessions().find(s => s.getId() === id);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadSession = async () => {
+      try {
+        setIsLoading(true);
+        const sessions = await getAllSessions();
+        const foundSession = sessions.find(s => s.getId() === id);
+        setSession(foundSession || null);
+      } catch (error) {
+        console.error('Failed to load session:', error);
+        setSession(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadSession();
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <ThemedView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0a7ea4" />
+          <ThemedText style={styles.loadingText}>Loading session...</ThemedText>
+        </View>
+      </ThemedView>
+    );
+  }
   
   if (!session) {
     return (
@@ -137,5 +166,15 @@ const styles = StyleSheet.create({
   },
   noteText: {
     fontSize: 14,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#687076',
   },
 });

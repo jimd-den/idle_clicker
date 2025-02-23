@@ -39,6 +39,7 @@ export class WorkTimerServiceImpl implements WorkTimerService {
     console.log('WorkTimerService: startTimer called');
     this.startTimerUseCase.execute();
     this.timerService.start();
+    console.log('Timer started');
     const metrics = this.getCurrentMetrics();
     if (this.metricsUpdateCallback) {
       this.metricsUpdateCallback(metrics);
@@ -83,6 +84,7 @@ export class WorkTimerServiceImpl implements WorkTimerService {
     console.log('WorkTimerService: resetSession called');
     this.resetSessionUseCase.execute(true);
     this.timerService.reset();
+    this.timerService.start(); // Start the timer after reset
     this.clickTimes.length = 0;
     const metrics = this.getCurrentMetrics();
     if (this.metricsUpdateCallback) {

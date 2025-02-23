@@ -8,35 +8,50 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { SessionHistory } from '@/components/SessionHistory';
 import { useSessionService } from '@/infrastructure/contexts/SessionContext';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useWorkTimerService } from '@/infrastructure/contexts/WorkSessionContext';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { getAllSessions, startNewSession } = useSessionService();
-  const sessionService = useSessionService();
   const workTimerService = useWorkTimerService();
   const [isLoading, setIsLoading] = useState(true);
   const [sessions, setSessions] = useState<Session[]>([]);
 
-  useEffect(() => {
-    const initializeAndLoadSessions = async () => {
-      try {
-        await sessionService.initialize();
-        const loadedSessions = await getAllSessions();
-        setSessions(loadedSessions);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    initializeAndLoadSessions();
-  }, [getAllSessions, sessionService]);
+  const loadSessions = async () => {
+    try {
+      setIsLoading(true);
+      const loadedSessions = await getAllSessions();
+      setSessions(loadedSessions);
+    } catch (error) {
+      console.error('Failed to load sessions:', error);
+      setSessions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const handleStartNewSession = () => {
-    workTimerService.resetSession();
-    startNewSession();
-    router.push('/play');
+  // Initial load
+  useEffect(() => {
+    loadSessions();
+  }, []);
+
+  // Refresh on focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadSessions();
+    }, [])
+  );
+
+  const handleStartNewSession = async () => {
+    try {
+      workTimerService.resetSession();
+      await startNewSession();
+      router.push('/play');
+    } catch (error) {
+      console.error('Failed to start new session:', error);
+    }
   };
 
   const handleSessionHistoryPress = () => {

@@ -14,7 +14,15 @@ export class SessionService {
   constructor(
     private readonly storageService: StorageService,
     private readonly timeService: TimeService
-  ) {}
+  ) {
+    // Bind methods to ensure 'this' context is preserved
+    this.initialize = this.initialize.bind(this);
+    this.startNewSession = this.startNewSession.bind(this);
+    this.endCurrentSession = this.endCurrentSession.bind(this);
+    this.getCurrentSession = this.getCurrentSession.bind(this);
+    this.getAllSessions = this.getAllSessions.bind(this);
+    this.addNote = this.addNote.bind(this);
+  }
 
   async initialize(): Promise<void> {
     if (this.initialized) return;
@@ -96,6 +104,8 @@ export class SessionService {
   }
 
   async startNewSession(): Promise<Session> {
+    await this.initialize();
+    
     if (this.currentSession && !this.currentSession.isComplete()) {
       throw new Error('Cannot start new session while current session is active');
     }
@@ -121,10 +131,12 @@ export class SessionService {
       criticalFailure: number;
     }
   ): Promise<Session | null> {
+    await this.initialize();
+    
     if (this.currentSession && !this.currentSession.isComplete()) {
       const currentTime = this.timeService.getCurrentTime();
       this.currentSession.setTotalClicks(clicks);
-      this.currentSession.setFinalUPM(upm);
+      this.currentSession.getFinalUPM();
       this.currentSession.updateSmoothnessMetrics(smoothnessMetrics);
       this.currentSession.setEndTime(currentTime);
       
@@ -139,21 +151,21 @@ export class SessionService {
     return null;
   }
 
-  getCurrentSession(): Session | null {
+  async getCurrentSession(): Promise<Session | null> {
+    await this.initialize();
     return this.currentSession;
   }
 
-  getAllSessions(): Session[] {
-    if (!this.initialized) {
-      console.warn('SessionService not initialized. Returning empty array.');
-      return [];
-    }
+  async getAllSessions(): Promise<Session[]> {
+    await this.initialize();
     return [...(this.sessions || [])]
       .filter(session => session instanceof Session)  // Type guard to ensure valid sessions
       .sort((a, b) => b.getStartTime() - a.getStartTime());
   }
 
   async addNote(note: SessionNote): Promise<void> {
+    await this.initialize();
+    
     if (!this.currentSession) {
       throw new Error('No active session to add note to');
     }

@@ -58,6 +58,7 @@ export default function PlayScreen() {
   const [noteText, setNoteText] = useState('');
   const [notes, setNotes] = useState<Array<{ timestamp: string, text: string }>>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isEnding, setIsEnding] = useState(false);
   
   const workSession = useWorkSession();
   const workTimer = useWorkTimer();
@@ -89,21 +90,34 @@ export default function PlayScreen() {
     };
   }, [workSession, workTimer, metricsUpdateCallback]);
 
+  useEffect(() => {
+    console.log('Elapsed Time:', metrics.elapsedTimeMs);
+  }, [metrics.elapsedTimeMs]);
+
   const handleEndSession = useCallback(async () => {
-    if (controllerRef.current) {
+    if (controllerRef.current && !isEnding) {
       try {
         setError(null);
-        // End the current session with final metrics
+        setIsEnding(true);
+        
+        // Make sure timer is stopped
+        controllerRef.current.pauseTimer();
+        setMetrics(prev => ({ ...prev, isRunning: false }));
+        
+        // End the session
         await endCurrentSession(metrics.clicks, metrics.upm, metrics.smoothnessMetrics);
-        // Navigate back to history screen
+        
+        // Navigate back to home screen
         router.replace('/');
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to end session');
+        setIsEnding(false);
       }
     }
-  }, [metrics, endCurrentSession, router]);
+  }, [metrics, endCurrentSession, router, isEnding]);
 
   const handleStartPause = useCallback(() => {
+    console.log('handleStartPause called');
     if (controllerRef.current) {
       if (metrics.isRunning) {
         controllerRef.current.pauseTimer();
@@ -174,7 +188,7 @@ export default function PlayScreen() {
               style={[styles.clickButton, !metrics.isRunning && styles.clickButtonDisabled]}
               onPress={handleIncrementClick}
               accessibilityLabel="Click to increment work units"
-              disabled={!metrics.isRunning}
+              disabled={!metrics.isRunning || isEnding}
             >
               <IconSymbol name="plus.circle" size={48} color="#fff" />
             </TouchableOpacity>
@@ -183,6 +197,7 @@ export default function PlayScreen() {
               isRunning={metrics.isRunning}
               onStartPause={handleStartPause}
               onReset={handleReset}
+              disabled={isEnding}
             />
           </View>
 
@@ -199,11 +214,12 @@ export default function PlayScreen() {
                     multiline
                     numberOfLines={2}
                     maxLength={200}
+                    editable={!isEnding}
                   />
                   <TouchableOpacity
-                    style={[styles.addButton, !noteText.trim() && styles.addButtonDisabled]}
+                    style={[styles.addButton, (!noteText.trim() || isEnding) && styles.addButtonDisabled]}
                     onPress={handleAddNote}
-                    disabled={!noteText.trim()}
+                    disabled={!noteText.trim() || isEnding}
                     accessibilityLabel="Add Note"
                   >
                     <IconSymbol name="plus" size={24} color="#fff" />
@@ -234,13 +250,16 @@ export default function PlayScreen() {
             )}
 
             <TouchableOpacity 
-              style={[styles.endSessionButton]} 
+              style={[styles.endSessionButton, isEnding && styles.endSessionButtonDisabled]} 
               onPress={handleEndSession}
+              disabled={isEnding}
               accessibilityLabel="End Session"
             >
               <View style={styles.buttonContent}>
                 <IconSymbol name="stop.circle" size={24} color="#fff" />
-                <ThemedText style={styles.endSessionButtonText}>End Session</ThemedText>
+                <ThemedText style={styles.endSessionButtonText}>
+                  {isEnding ? 'Ending Session...' : 'End Session'}
+                </ThemedText>
               </View>
             </TouchableOpacity>
           </View>
@@ -356,7 +375,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   endSessionButtonDisabled: {
-    backgroundColor: '#666',
+    opacity: 0.5,
   },
   buttonContent: {
     flexDirection: 'row',

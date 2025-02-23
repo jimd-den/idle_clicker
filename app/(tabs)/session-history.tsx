@@ -4,34 +4,38 @@ import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { SessionHistory } from '@/components/SessionHistory';
 import { useSessionService } from '@/infrastructure/contexts/SessionContext';
-import { Stack } from 'expo-router';
+import { Stack, useFocusEffect } from 'expo-router';
 import { Session } from '@/domain/entities/Session';
 
 export default function SessionHistoryScreen() {
   const { getAllSessions } = useSessionService();
-  const sessionService = useSessionService();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const loadSessions = async () => {
+    try {
+      setIsLoading(true);
+      const loadedSessions = await getAllSessions();
+      setSessions(loadedSessions || []);
+    } catch (error) {
+      console.error('Failed to load sessions:', error);
+      setSessions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Initial load
   useEffect(() => {
-    const initializeAndLoadSessions = async () => {
-      try {
-        await sessionService.initialize();
-        const loadedSessions = await getAllSessions();
-        if (Array.isArray(loadedSessions)) {
-          setSessions(loadedSessions);
-        } else {
-          setSessions([]);
-        }
-      } catch (error) {
-        console.error('Failed to load sessions:', error);
-        setSessions([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    initializeAndLoadSessions();
-  }, [getAllSessions, sessionService]);
+    loadSessions();
+  }, []);
+
+  // Refresh on focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadSessions();
+    }, [])
+  );
 
   return (
     <ThemedView style={styles.container}>
