@@ -1,88 +1,147 @@
 export class WorkSession {
-  private startTime: Date | null;
-  private endTime: Date | null;
+  private startTime: number | null;
+  private endTime: number | null;
   private elapsedTimeMs: number; // Elapsed time in milliseconds
   private clicks: number;
-  // private timerService: TimerService; // REMOVE TimerService dependency - WorkSession should not depend on Infrastructure
+  private smoothnessMetrics: {
+    consistency: number;  // 0-100 scale
+    rhythm: number;      // Time between actions
+    flowState: number;   // Consecutive smooth operations
+    criticalSuccess: number; // Perfect timing instances
+    criticalFailure: number; // Major disruptions
+  };
+  private rewards: {
+    experience: number;
+    achievementPoints: number;
+    flowBonus: number;
+    streakMultiplier: number;
+  };
 
-  constructor() { // Removed TimerService from constructor
+  constructor() {
     this.startTime = null;
     this.endTime = null;
     this.elapsedTimeMs = 0;
     this.clicks = 0;
-    console.log("WorkSession: constructor - WorkSession instance created"); // ADDED LOG
+    this.smoothnessMetrics = {
+      consistency: 0,
+      rhythm: 0,
+      flowState: 0,
+      criticalSuccess: 0,
+      criticalFailure: 0
+    };
+    this.rewards = {
+      experience: 0,
+      achievementPoints: 0,
+      flowBonus: 0,
+      streakMultiplier: 0
+    };
   }
 
-  start(): void {
-    console.log("WorkSession: start() called - START"); // ADDED LOG
-    console.log("WorkSession: start() - Before start - startTime:", this.startTime, "endTime:", this.endTime, "elapsedTimeMs:", this.elapsedTimeMs); // ADDED LOG
-    // Always start the timer when start is called
-    this.startTime = new Date();
-    this.endTime = null; // Clear endTime to indicate timer is running
-    console.log("WorkSession: start() - timer started/restarted - startTime:", this.startTime, "endTime:", this.endTime); // ADDED LOG
-    // this.timerService.start(); // REMOVE TimerService interaction - WorkSession should not depend on Infrastructure
-    console.log("WorkSession: start() called - END"); // ADDED LOG
+  start(timestamp: number): void {
+    this.startTime = timestamp;
+    this.endTime = null;
+    this.elapsedTimeMs = 0;
   }
 
-  pause(): void {
-    console.log("WorkSession: pause() called - START"); // ADDED LOG
-    console.log("WorkSession: pause() - before pause - startTime:", this.startTime, "endTime:", this.endTime, "elapsedTimeMs:", this.elapsedTimeMs); // ADDED LOG
+  pause(timestamp: number): void {
     if (this.startTime && !this.endTime) {
-      this.endTime = new Date();
-      console.log("WorkSession: pause() - timer paused - endTime:", this.endTime); // ADDED LOG
+      this.endTime = timestamp;
+      this.elapsedTimeMs = this.endTime - this.startTime;
     }
-    console.log("WorkSession: pause() - after pause - startTime:", this.startTime, "endTime:", this.endTime); // ADDED LOG
-    // this.timerService.pause(); // REMOVE TimerService interaction - WorkSession should not depend on Infrastructure
-    console.log("WorkSession: pause() called - END"); // ADDED LOG
   }
 
-  reset(autoStart: boolean = false): void {
-    console.log("WorkSession: reset() called - START"); // ADDED LOG
-    console.log("WorkSession: reset() - before reset - startTime:", this.startTime, "endTime:", this.endTime, "elapsedTimeMs:", this.elapsedTimeMs, "clicks:", this.clicks); // ADDED LOG
+  reset(timestamp?: number): void {
     this.startTime = null;
     this.endTime = null;
     this.elapsedTimeMs = 0;
     this.clicks = 0;
-    console.log("WorkSession: reset() - session reset - startTime:", this.startTime, "endTime:", this.endTime, "elapsedTimeMs:", this.elapsedTimeMs, "clicks:", this.clicks); // ADDED LOG
-
-    if (autoStart) {
-      console.log("WorkSession: reset() - auto-starting timer");
-      this.start(); // Just start WorkSession timer logic, TimerService start is handled elsewhere
+    this.smoothnessMetrics = {
+      consistency: 0,
+      rhythm: 0,
+      flowState: 0,
+      criticalSuccess: 0,
+      criticalFailure: 0
+    };
+    this.rewards = {
+      experience: 0,
+      achievementPoints: 0,
+      flowBonus: 0,
+      streakMultiplier: 0
+    };
+    
+    if (timestamp) {
+      this.start(timestamp);
     }
-    console.log("WorkSession: reset() called - END"); // ADDED LOG
   }
 
   recordClick(): void {
     this.clicks++;
-    console.log("WorkSession: recordClick() called"); // ADDED LOG
-    console.log("WorkSession: clicks incremented to:", this.clicks); // ADDED LOG
+    // Ensure elapsedTimeMs is always current
+    if (this.startTime && !this.endTime) {
+      this.elapsedTimeMs = Date.now() - this.startTime;
+    }
   }
 
   getElapsedTimeMs(): number {
     return this.elapsedTimeMs;
   }
 
-  getStartTime(): Date | null {
+  getStartTime(): number | null {
     return this.startTime;
   }
 
-  getEndTime(): Date | null {
+  getEndTime(): number | null {
     return this.endTime;
   }
 
   getClicks(): number {
-    console.log("WorkSession: getClicks() returning:", this.clicks); // ADDED LOG
     return this.clicks;
   }
 
   isRunning(): boolean {
     const running = !!this.startTime && !this.endTime;
-    console.log("WorkSession: isRunning() - startTime:", this.startTime, "endTime:", this.endTime, "returning:", running); // ADDED LOG
     return running;
   }
 
   updateElapsedTime(elapsedTimeMs: number): void {
     this.elapsedTimeMs = elapsedTimeMs;
-    console.log("WorkSession: updateElapsedTime() - elapsedTimeMs updated to:", this.elapsedTimeMs); // ADDED LOG
+  }
+
+  updateSmoothnessMetrics(metrics: {
+    consistency: number;
+    rhythm: number;
+    flowState: number;
+    criticalSuccess: number;
+    criticalFailure: number;
+  }): void {
+    this.smoothnessMetrics = metrics;
+  }
+
+  getSmoothnessMetrics(): {
+    consistency: number;
+    rhythm: number;
+    flowState: number;
+    criticalSuccess: number;
+    criticalFailure: number;
+  } {
+    return this.smoothnessMetrics;
+  }
+
+  updateRewards(rewards: {
+    experience: number;
+    achievementPoints: number;
+    flowBonus: number;
+    streakMultiplier: number;
+  }): void {
+    this.rewards = rewards;
+  }
+
+  getRewards(): {
+    experience: number;
+    achievementPoints: number;
+    flowBonus: number;
+    streakMultiplier: number;
+  } {
+    return this.rewards;
   }
 }

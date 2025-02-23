@@ -1,23 +1,54 @@
+/**
+ * Domain Layer - Entities
+ * 
+ * Session entity should be independent of infrastructure concerns
+ */
+
 export interface SessionNote {
   timestamp: number;  // milliseconds since session start
   text: string;
 }
 
+export interface SessionProperties {
+  id?: string;
+  startTime?: number;
+  endTime?: number | null;
+  totalClicks?: number;
+  notes?: SessionNote[];
+  finalUPM?: number;
+}
+
 export class Session {
   private id: string;
-  private startTime: Date;
-  private endTime: Date | null;
+  private startTime: number;
+  private endTime: number | null;
   private totalClicks: number;
   private notes: SessionNote[];
   private finalUPM: number;
+  private elapsedTimeMs: number;
+  private smoothnessMetrics: {
+    consistency: number;
+    rhythm: number;
+    flowState: number;
+    criticalSuccess: number;
+    criticalFailure: number;
+  };
 
-  constructor(id?: string) {
-    this.id = id || new Date().getTime().toString();
-    this.startTime = new Date();
+  constructor(id: string, startTime: number) {
+    this.id = id;
+    this.startTime = startTime;
     this.endTime = null;
     this.totalClicks = 0;
     this.notes = [];
     this.finalUPM = 0;
+    this.elapsedTimeMs = 0;
+    this.smoothnessMetrics = {
+      consistency: 0,
+      rhythm: 0,
+      flowState: 0,
+      criticalSuccess: 0,
+      criticalFailure: 0
+    };
   }
 
   // Getters
@@ -25,11 +56,11 @@ export class Session {
     return this.id;
   }
 
-  getStartTime(): Date {
+  getStartTime(): number {
     return this.startTime;
   }
 
-  getEndTime(): Date | null {
+  getEndTime(): number | null {
     return this.endTime;
   }
 
@@ -46,58 +77,45 @@ export class Session {
   }
 
   getDuration(): number {
-    if (!this.endTime) {
-      return new Date().getTime() - this.startTime.getTime();
-    }
-    return this.endTime.getTime() - this.startTime.getTime();
+    return this.elapsedTimeMs;
+  }
+
+  getSmoothnessMetrics(): {
+    consistency: number;
+    rhythm: number;
+    flowState: number;
+    criticalSuccess: number;
+    criticalFailure: number;
+  } {
+    return { ...this.smoothnessMetrics };
   }
 
   // Setters and methods
-  setEndTime(endTime: Date): void {
-    if (endTime < this.startTime) {
-      throw new Error('End time cannot be before start time');
-    }
+  setEndTime(endTime: number, elapsedTimeMs: number): void {
     this.endTime = endTime;
+    this.elapsedTimeMs = elapsedTimeMs;
+    // Recalculate final metrics immediately
+    if (this.totalClicks > 0) {
+      const minutes = elapsedTimeMs / (1000 * 60);
+      this.finalUPM = minutes > 0 ? Math.round((this.totalClicks / minutes) * 10) / 10 : 0;
+    }
   }
 
   setTotalClicks(clicks: number): void {
-    if (clicks < 0) {
-      throw new Error('Total clicks cannot be negative');
-    }
     this.totalClicks = clicks;
-  }
-
-  setFinalUPM(upm: number): void {
-    if (upm < 0) {
-      throw new Error('UPM cannot be negative');
+    // Update UPM immediately when clicks change
+    if (this.endTime) {
+      const duration = this.getDuration();
+      const minutes = duration / (1000 * 60);
+      this.finalUPM = minutes > 0 ? Math.round((clicks / minutes) * 10) / 10 : 0;
     }
-    this.finalUPM = upm;
   }
 
   addNote(note: SessionNote): void {
-    if (!note.text.trim()) {
-      throw new Error('Note text cannot be empty');
-    }
-    if (note.timestamp < 0) {
-      throw new Error('Note timestamp cannot be negative');
-    }
-    if (this.isComplete()) {
-      throw new Error('Cannot add notes to completed session');
-    }
-    this.notes.push({
-      timestamp: note.timestamp,
-      text: note.text.trim()
-    });
+    this.notes.push(note);
   }
 
-  setProperties(props: {
-    id?: string;
-    startTime?: Date;
-    endTime?: Date | null;
-    totalClicks?: number;
-    notes?: SessionNote[];
-    finalUPM?: number;
-  }): void {
+  setProperties(props: SessionProperties): void {
     if (props.id) this.id = props.id;
     if (props.startTime) this.startTime = props.startTime;
     if ('endTime' in props) {
@@ -105,7 +123,7 @@ export class Session {
     }
     if (typeof props.totalClicks === 'number') this.setTotalClicks(props.totalClicks);
     if (props.notes) this.notes = [...props.notes];
-    if (typeof props.finalUPM === 'number') this.setFinalUPM(props.finalUPM);
+    if (typeof props.finalUPM === 'number') this.getFinalUPM();
   }
 
   toJSON() {
@@ -115,23 +133,34 @@ export class Session {
       endTime: this.endTime,
       totalClicks: this.totalClicks,
       notes: this.notes,
-      finalUPM: this.finalUPM
+      finalUPM: this.finalUPM,
+      smoothnessMetrics: this.smoothnessMetrics
     };
   }
 
   static fromJSON(data: any): Session {
-    const session = new Session(data.id);
+    const session = new Session(data.id, data.startTime);
     session.setProperties({
-      startTime: new Date(data.startTime),
-      endTime: data.endTime ? new Date(data.endTime) : null,
+      endTime: data.endTime,
       totalClicks: data.totalClicks,
       notes: data.notes,
       finalUPM: data.finalUPM
     });
+    session.updateSmoothnessMetrics(data.smoothnessMetrics);
     return session;
   }
 
   isComplete(): boolean {
     return this.endTime !== null;
+  }
+
+  updateSmoothnessMetrics(metrics: {
+    consistency: number;
+    rhythm: number;
+    flowState: number;
+    criticalSuccess: number;
+    criticalFailure: number;
+  }): void {
+    this.smoothnessMetrics = { ...metrics };
   }
 }

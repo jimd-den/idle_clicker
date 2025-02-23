@@ -1,22 +1,61 @@
 import { Link } from 'expo-router';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Session } from '@/domain/entities/Session';
 
 import { HelloWave } from '@/components/HelloWave';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { SessionHistory } from '@/components/SessionHistory';
-import { useSession } from '@/contexts/SessionContext';
-import { useRouter } from 'expo-router';
+import { useSessionService } from '@/infrastructure/contexts/SessionContext';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { useWorkTimerService } from '@/infrastructure/contexts/WorkSessionContext';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { getAllSessions, startNewSession, isLoading } = useSession();
+  const { getAllSessions, startNewSession } = useSessionService();
+  const workTimerService = useWorkTimerService();
+  const [isLoading, setIsLoading] = useState(true);
+  const [sessions, setSessions] = useState<Session[]>([]);
 
-  const handleStartNewSession = () => {
-    startNewSession();
-    router.push('/play');
+  const loadSessions = async () => {
+    try {
+      setIsLoading(true);
+      const loadedSessions = await getAllSessions();
+      setSessions(loadedSessions);
+    } catch (error) {
+      console.error('Failed to load sessions:', error);
+      setSessions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Initial load
+  useEffect(() => {
+    loadSessions();
+  }, []);
+
+  // Refresh on focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadSessions();
+    }, [])
+  );
+
+  const handleStartNewSession = async () => {
+    try {
+      workTimerService.resetSession();
+      await startNewSession();
+      router.push('/play');
+    } catch (error) {
+      console.error('Failed to start new session:', error);
+    }
+  };
+
+  const handleSessionHistoryPress = () => {
+    router.push('./session-history');
   };
 
   return (
@@ -46,7 +85,15 @@ export default function HomeScreen() {
               <IconSymbol name="clock.fill" size={20} color="#687076" />
               <ThemedText style={styles.sectionTitle}>Session History</ThemedText>
             </View>
-            <SessionHistory sessions={getAllSessions()} />
+            {sessions && sessions.length > 0 ? (
+              <View style={styles.historyList}>
+                <SessionHistory sessions={sessions} />
+              </View>
+            ) : (
+              <ThemedText style={styles.emptyText}>
+                No sessions yet. Start a new session to begin tracking!
+              </ThemedText>
+            )}
           </View>
         </>
       )}
@@ -99,6 +146,9 @@ const styles = StyleSheet.create({
   historyContainer: {
     flex: 1,
   },
+  historyList: {
+    flex: 1,
+  },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -108,5 +158,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
+  },
+  emptyText: {
+    textAlign: 'center',
+    padding: 20,
+    fontSize: 16,
+    color: '#687076',
   },
 });

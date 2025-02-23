@@ -12,7 +12,6 @@ import { useWorkSession } from '@/infrastructure/contexts/WorkSessionContext';
 import { useWorkTimer } from '@/infrastructure/contexts/WorkTimerContext';
 import { useSessionService } from '@/infrastructure/contexts/SessionContext';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 interface MetricsUpdate {
   elapsedTimeMs: number;
@@ -58,7 +57,6 @@ export default function PlayScreen() {
   const [noteText, setNoteText] = useState('');
   const [notes, setNotes] = useState<Array<{ timestamp: string, text: string }>>([]);
   const [error, setError] = useState<string | null>(null);
-  const [isEnding, setIsEnding] = useState(false);
   
   const workSession = useWorkSession();
   const workTimer = useWorkTimer();
@@ -66,65 +64,46 @@ export default function PlayScreen() {
 
   const controllerRef = useRef<PlayScreenController | null>(null);
 
-  // Direct metrics update without debouncing
-  const metricsUpdateCallback = useCallback((updatedMetrics: MetricsUpdate) => {
-    setMetrics(updatedMetrics);
-  }, []);
-
-  // Initialize controller with proper cleanup
+  // Initialize controller once
   useEffect(() => {
     controllerRef.current = new PlayScreenController(workSession, workTimer.timerService);
+    
+    // Set up metrics update subscription first
     const currentController = controllerRef.current;
+    currentController.onMetricsUpdate((updatedMetrics) => {
+      console.log('Metrics update received:', updatedMetrics);
+      setMetrics(updatedMetrics); // Update all metrics at once
+    });
     
-    currentController.onMetricsUpdate(metricsUpdateCallback);
-    
+    // Then initialize metrics and reset session
     const resetMetrics = currentController.resetSession();
     setMetrics(resetMetrics);
     setNotes([]);
 
+    // Cleanup
     return () => {
       if (currentController) {
         currentController.clearMetricsUpdateCallback();
         currentController.pauseTimer();
       }
     };
-  }, [workSession, workTimer, metricsUpdateCallback]);
-
-  useEffect(() => {
-    console.log('Elapsed Time:', metrics.elapsedTimeMs);
-  }, [metrics.elapsedTimeMs]);
+  }, [workSession, workTimer]); // Only recreate when core dependencies change
 
   const handleEndSession = useCallback(async () => {
-    if (controllerRef.current && !isEnding) {
+    if (controllerRef.current) {
       try {
         setError(null);
-        setIsEnding(true);
-        
-        // Make sure timer is stopped and metrics are settled before ending
-        await controllerRef.current.pauseTimer();
-        setMetrics(prev => ({ ...prev, isRunning: false }));
-        
-        // Wait a frame to ensure metrics are updated
-        await new Promise(resolve => requestAnimationFrame(resolve));
-        
-        // End the session with final metrics
-        await endCurrentSession(
-          metrics.clicks,
-          metrics.upm,
-          metrics.elapsedTimeMs,
-          metrics.smoothnessMetrics
-        );
-        
+        // End the current session with final metrics
+        await endCurrentSession(metrics.clicks, metrics.upm, metrics.smoothnessMetrics);
+        // Navigate back to history screen
         router.replace('/');
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to end session');
-        setIsEnding(false);
       }
     }
-  }, [metrics, endCurrentSession, router, isEnding]);
+  }, [metrics, endCurrentSession, router]);
 
   const handleStartPause = useCallback(() => {
-    console.log('handleStartPause called');
     if (controllerRef.current) {
       if (metrics.isRunning) {
         controllerRef.current.pauseTimer();
@@ -170,109 +149,102 @@ export default function PlayScreen() {
 
   // --- Render ---
   return (
-    <ErrorBoundary>
-      <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
-        <ThemedView style={styles.container}>
-          {error && (
-            <View style={styles.errorContainer}>
-              <IconSymbol name="xmark.circle" size={20} color="#e74c3c" />
-              <ThemedText style={styles.errorText}>{error}</ThemedText>
-            </View>
+    <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
+      <ThemedView style={styles.container}>
+        {error && (
+          <View style={styles.errorContainer}>
+            <IconSymbol name="xmark.circle" size={20} color="#e74c3c" />
+            <ThemedText style={styles.errorText}>{error}</ThemedText>
+          </View>
+        )}
+
+        <View style={styles.metricsContainer}>
+          <MetricsDisplay 
+            clicks={metrics.clicks} 
+            elapsedTimeMs={metrics.elapsedTimeMs} 
+            upm={metrics.upm}
+            smoothnessMetrics={metrics.smoothnessMetrics}
+            rewards={metrics.rewards}
+          />
+        </View>
+
+        <View style={styles.mainContent}>
+          <TouchableOpacity
+            style={[styles.clickButton, !metrics.isRunning && styles.clickButtonDisabled]}
+            onPress={handleIncrementClick}
+            accessibilityLabel="Click to increment work units"
+            disabled={!metrics.isRunning}
+          >
+            <IconSymbol name="plus.circle" size={48} color="#fff" />
+          </TouchableOpacity>
+
+          <TimerControls
+            isRunning={metrics.isRunning}
+            onStartPause={handleStartPause}
+            onReset={handleReset}
+          />
+        </View>
+
+        <View style={styles.bottomSection}>
+          {!metrics.isRunning && (
+            <>
+              <View style={styles.noteInputContainer}>
+                <TextInput
+                  style={styles.noteTextInput}
+                  placeholder="Add note..."
+                  placeholderTextColor="rgba(255,255,255,0.5)"
+                  value={noteText}
+                  onChangeText={setNoteText}
+                  multiline
+                  numberOfLines={2}
+                  maxLength={200}
+                />
+                <TouchableOpacity
+                  style={[styles.addButton, !noteText.trim() && styles.addButtonDisabled]}
+                  onPress={handleAddNote}
+                  disabled={!noteText.trim()}
+                  accessibilityLabel="Add Note"
+                >
+                  <IconSymbol name="plus" size={24} color="#fff" />
+                </TouchableOpacity>
+              </View>
+
+              <FlatList
+                data={notes}
+                keyExtractor={(_, index) => index.toString()}
+                renderItem={({ item }) => (
+                  <View style={styles.noteItem}>
+                    <View style={styles.noteHeader}>
+                      <IconSymbol name="clock" size={14} color="#888" />
+                      <ThemedText style={styles.noteTimestamp}>{item.timestamp}</ThemedText>
+                    </View>
+                    <ThemedText style={styles.noteText}>{item.text}</ThemedText>
+                  </View>
+                )}
+                ListEmptyComponent={() => (
+                  <View style={styles.emptyNotesContainer}>
+                    <IconSymbol name="info.circle" size={24} color="#777" />
+                    <ThemedText style={styles.emptyNotes}>Pause timer to add notes</ThemedText>
+                  </View>
+                )}
+                style={styles.notesList}
+              />
+            </>
           )}
 
-          <View style={styles.metricsContainer}>
-            <MetricsDisplay 
-              clicks={metrics.clicks} 
-              elapsedTimeMs={metrics.elapsedTimeMs} 
-              upm={metrics.upm}
-              smoothnessMetrics={metrics.smoothnessMetrics}
-              rewards={metrics.rewards}
-            />
-          </View>
-
-          <View style={styles.mainContent}>
-            <TouchableOpacity
-              style={[styles.clickButton, !metrics.isRunning && styles.clickButtonDisabled]}
-              onPress={handleIncrementClick}
-              accessibilityLabel="Click to increment work units"
-              disabled={!metrics.isRunning || isEnding}
-            >
-              <IconSymbol name="plus.circle" size={48} color="#fff" />
-            </TouchableOpacity>
-
-            <TimerControls
-              isRunning={metrics.isRunning}
-              onStartPause={handleStartPause}
-              onReset={handleReset}
-              disabled={isEnding}
-            />
-          </View>
-
-          <View style={styles.bottomSection}>
-            {!metrics.isRunning && (
-              <>
-                <View style={styles.noteInputContainer}>
-                  <TextInput
-                    style={styles.noteTextInput}
-                    placeholder="Add note..."
-                    placeholderTextColor="rgba(255,255,255,0.5)"
-                    value={noteText}
-                    onChangeText={setNoteText}
-                    multiline
-                    numberOfLines={2}
-                    maxLength={200}
-                    editable={!isEnding}
-                  />
-                  <TouchableOpacity
-                    style={[styles.addButton, (!noteText.trim() || isEnding) && styles.addButtonDisabled]}
-                    onPress={handleAddNote}
-                    disabled={!noteText.trim() || isEnding}
-                    accessibilityLabel="Add Note"
-                  >
-                    <IconSymbol name="plus" size={24} color="#fff" />
-                  </TouchableOpacity>
-                </View>
-
-                <FlatList
-                  data={notes}
-                  keyExtractor={(_, index) => index.toString()}
-                  renderItem={({ item }) => (
-                    <View style={styles.noteItem}>
-                      <View style={styles.noteHeader}>
-                        <IconSymbol name="clock" size={14} color="#888" />
-                        <ThemedText style={styles.noteTimestamp}>{item.timestamp}</ThemedText>
-                      </View>
-                      <ThemedText style={styles.noteText}>{item.text}</ThemedText>
-                    </View>
-                  )}
-                  ListEmptyComponent={() => (
-                    <View style={styles.emptyNotesContainer}>
-                      <IconSymbol name="info.circle" size={24} color="#777" />
-                      <ThemedText style={styles.emptyNotes}>Pause timer to add notes</ThemedText>
-                    </View>
-                  )}
-                  style={styles.notesList}
-                />
-              </>
-            )}
-
-            <TouchableOpacity 
-              style={[styles.endSessionButton, isEnding && styles.endSessionButtonDisabled]} 
-              onPress={handleEndSession}
-              disabled={isEnding}
-              accessibilityLabel="End Session"
-            >
-              <View style={styles.buttonContent}>
-                <IconSymbol name="stop.circle" size={24} color="#fff" />
-                <ThemedText style={styles.endSessionButtonText}>
-                  {isEnding ? 'Ending Session...' : 'End Session'}
-                </ThemedText>
-              </View>
-            </TouchableOpacity>
-          </View>
-        </ThemedView>
-      </SafeAreaView>
-    </ErrorBoundary>
+          <TouchableOpacity 
+            style={[styles.endSessionButton]} 
+            onPress={handleEndSession}
+            accessibilityLabel="End Session"
+          >
+            <View style={styles.buttonContent}>
+              <IconSymbol name="stop.circle" size={24} color="#fff" />
+              <ThemedText style={styles.endSessionButtonText}>End Session</ThemedText>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </ThemedView>
+    </SafeAreaView>
   );
 }
 
@@ -382,7 +354,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   endSessionButtonDisabled: {
-    opacity: 0.5,
+    backgroundColor: '#666',
   },
   buttonContent: {
     flexDirection: 'row',

@@ -4,28 +4,30 @@ import { IconSymbol } from './ui/IconSymbol';
 
 interface TimerControlsProps {
   isRunning: boolean;
+  disabled?: boolean;
   onStartPause: () => void;
   onReset: () => void;
 }
 
-export function TimerControls({ isRunning, onStartPause, onReset }: TimerControlsProps) {
+export function TimerControls({ isRunning, onStartPause, onReset, disabled }: TimerControlsProps) {
   return (
     <View style={styles.controlsContainer}>
       <TouchableOpacity 
-        style={[styles.controlButton, isRunning && styles.controlButtonDisabled]} 
+        style={[styles.controlButton, disabled && styles.controlButtonDisabled]} 
         onPress={onReset} 
         accessibilityRole="button"
         accessibilityLabel="Reset Timer"
         accessibilityState={{ disabled: isRunning }}
-        disabled={isRunning}
+        disabled={disabled}
       >
         <IconSymbol name="arrow.counterclockwise" size={28} color={isRunning ? "#666" : "#fff"} />
       </TouchableOpacity>
       <TouchableOpacity 
-        style={[styles.controlButton, styles.playPauseButton]} 
+        style={[styles.controlButton, styles.playPauseButton, disabled && styles.controlButtonDisabled]} 
         onPress={onStartPause}
         accessibilityRole="button"
         accessibilityLabel={isRunning ? "Pause Timer" : "Start Timer"}
+        disabled={disabled}
       >
         <IconSymbol 
           name={isRunning ? "pause.circle.fill" : "play.circle.fill"} 
