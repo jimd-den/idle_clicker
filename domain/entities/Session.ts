@@ -25,6 +25,7 @@ export class Session {
   private totalClicks: number;
   private notes: SessionNote[];
   private finalUPM: number;
+  private duration: number;
   private smoothnessMetrics: {
     consistency: number;
     rhythm: number;
@@ -40,6 +41,7 @@ export class Session {
     this.totalClicks = 0;
     this.notes = [];
     this.finalUPM = 0;
+    this.duration = 0;
     this.smoothnessMetrics = {
       consistency: 0,
       rhythm: 0,
@@ -74,12 +76,8 @@ export class Session {
     return this.finalUPM;
   }
 
-  getDuration(currentTime?: number): number {
-    const end = this.endTime ?? currentTime;
-    if (!end) {
-      throw new Error('Cannot calculate duration without end time or current time');
-    }
-    return end - this.startTime;
+  getDuration(): number {
+    return this.duration;
   }
 
   getSmoothnessMetrics(): {
@@ -95,20 +93,13 @@ export class Session {
   // Setters and methods
   setEndTime(endTime: number): void {
     this.endTime = endTime;
-    // Recalculate final metrics immediately
-    if (this.totalClicks > 0) {
-      const duration = this.getDuration();
-      const minutes = duration / (1000 * 60);
-      this.finalUPM = minutes > 0 ? Math.round((this.totalClicks / minutes) * 10) / 10 : 0;
-    }
   }
 
   setTotalClicks(clicks: number): void {
     this.totalClicks = clicks;
     // Update UPM immediately when clicks change
-    if (this.endTime) {
-      const duration = this.getDuration();
-      const minutes = duration / (1000 * 60);
+    if (this.duration > 0) {
+      const minutes = this.duration / (1000 * 60);
       this.finalUPM = minutes > 0 ? Math.round((clicks / minutes) * 10) / 10 : 0;
     }
   }
@@ -125,7 +116,15 @@ export class Session {
     }
     if (typeof props.totalClicks === 'number') this.setTotalClicks(props.totalClicks);
     if (props.notes) this.notes = [...props.notes];
-    if (typeof props.finalUPM === 'number') this.setFinalUPM(props.finalUPM);
+    if (typeof props.finalUPM === 'number') this.getFinalUPM();
+  }
+
+  setDuration(durationMs: number): void {
+    this.duration = durationMs;
+    if (this.totalClicks > 0) {
+      const minutes = durationMs / (1000 * 60);
+      this.finalUPM = minutes > 0 ? Math.round((this.totalClicks / minutes) * 10) / 10 : 0;
+    }
   }
 
   toJSON() {
